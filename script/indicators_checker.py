@@ -1,4 +1,4 @@
-def calculate_yield_reduction(plant_type, climate_conditions, soil_moisture):
+def calculate_yield_reduction(plant_type, climate_conditions, soil_moisture,fertilizer):
     reduction_percentage = 0
     
     if plant_type == "wheat":
@@ -55,5 +55,8 @@ def calculate_yield_reduction(plant_type, climate_conditions, soil_moisture):
             reduction_percentage += 6
         elif soil_moisture > 4:
             reduction_percentage += 4
-    
+    if fertilizer == True:
+        reduction_percentage -= 1
+    else:
+        reduction_percentage += 1
     return reduction_percentage
