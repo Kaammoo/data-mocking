@@ -2,7 +2,7 @@ import random
 from faker import Faker
 from db import con
 from consts import *
-from datetime import datetime, timedelta
+# from datetime import datetime, timedelta
 import time
 
 
@@ -57,12 +57,8 @@ class DataMocking:
     def insert_products(self):
         self.cursor_obj.execute("SELECT id FROM product_types WHERE type = 'vegetables'")
         vegetable_id = self.cursor_obj.fetchone()
-        # vegetable_type_id = vegetable_type[0] if vegetable_type else None
-
         self.cursor_obj.execute("SELECT id FROM product_types WHERE type = 'cereal'")
         cereal_id = self.cursor_obj.fetchone()
-        # cereal_type_id = cereal_type[0] if cereal_type else None
-
         for product in products_armenia:
             if "vegetable" in product[1].lower():
                 type_id = vegetable_id
@@ -126,6 +122,18 @@ class DataMocking:
         self.cursor_obj.close()
         con.close()
     
+    def insert_expense_categories(self):
+        expense_categories = [
+            ("fertilizer",), ("equipment costs",), ("seed purchase",), ("employee expenses",)
+        ]
+        for category in expense_categories:
+            self.cursor_obj.execute("INSERT INTO expense_categories (name) VALUES (%s)", category)
+            
+        con.commit()
+        self.cursor_obj.close()
+        con.close()
+
+        
 
     def fields(self):
         self.cursor_obj.execute("SELECT * FROM communities")
