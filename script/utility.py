@@ -2,6 +2,7 @@ import random
 from db import con
 from consts import *
 import faker
+from datetime import datetime, timedelta
 
 class DataMocking:
     def __init__(self):
@@ -67,32 +68,60 @@ class DataMocking:
 
 
 
-    def get_numbers_by_product_name(products, product_name):
+    def get_crops_and_months_by_product_name(self, products, product_name):
         for product in products:
             if product[0] == product_name:
-                return product[2], product[3]
+                return product[2], product[3], product[4], product[5]
         return None 
+
+
+    def random_date_within_months(self, min_month, max_month, year):
+        date_year = datetime.now().year - year
+        month = random.randint(min_month, max_month)
+        day = random.randint(1, 28)
+        return datetime(date_year, month, day)
 
 
     def insert_plantings(self):
         self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
         records = self.cursor_obj.fetchall()
+        used_records = {}
+        years_duration = tuple((i for i in range(1, duration + 1)))
         for record in records:
-            record_id = record[0]
-            self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {record[2]}")
-            field_size = self.cursor_obj.fetchone()[0]
+            field_id = record[2]
+            if field_id in used_records:
+                if len(used_records[field_id]) >= duration:
+                    continue
+                elif len(used_records[field_id]) == 1:
+                    years_range = (x for x in years_duration if x != used_records[field_id])
+                    rand_year = random.choice(years_range)
+                    used_records[field_id] += (rand_year,)
+                else:
+                    years_range = tuple(item for item in years_duration if item not in used_records[field_id])
+                    rand_year = random.choice(years_range)
+                    used_records[field_id].add(rand_year)
+            else:
+                rand_year = random.choice(years_duration)
+                used_records[field_id] = (rand_year,)
             self.cursor_obj.execute(f"SELECT name FROM products WHERE id = {record[1]}")
             product_name = self.cursor_obj.fetchone()[0]
-            min_crop_count, max_crop_count = self.get_numbers_by_product_name(products_armenia, product_name)
+            crop_info = self.get_crops_and_months_by_product_name(products_armenia, product_name)
+            if crop_info is None:
+                continue
+            min_crop_count, max_crop_count, min_month, max_month = crop_info
+            random_date_generated = self.random_date_within_months(min_month, max_month, rand_year)
+            record_id = record[0]
+            self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
+            field_size = self.cursor_obj.fetchone()[0]
             workers_count = field_size // 100
             if workers_count > 9:
                 workers_count -= random.randint(0, 3)
             else:
                 workers_count += random.randint(0, 2)
             crop_count = (field_size * random.randint(min_crop_count, max_crop_count)) / 1000
-            
-        #self.cursor_obj.execute("INSERT INTO plantings (record_id, crop_quantity, date, workers_quantity) VALUES (%s, %s, %s, %s)",\
-        #                               (record_id, crop_count, ,workers_count))
+
+            self.cursor_obj.execute("INSERT INTO plantings (record_id, crop_quantity, date, workers_quantity) VALUES (%s, %s, %s, %s)",\
+                (record_id, crop_count, random_date_generated, workers_count))
 
         
         con.commit()
