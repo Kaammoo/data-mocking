@@ -9,14 +9,15 @@ class DataMocking:
         self.cursor_obj = con.cursor()
 
 
-    def insert_precipitation_types(self):
-        precipitation_types = (
-            ("rain", ),
-            ("snow",),
-            ("hail",)
-        )
-        for prec_type in precipitation_types:
-            self.cursor_obj.execute("INSERT INTO prec_types (name) VALUES (%s)", prec_type)
+    def insert_product_type(self):
+        self.cursor_obj.execute("SELECT id FROM products")
+        product_type_data = [
+            ("vegetables",),
+            ("cereal",)
+        ]
+        for product_type in product_type_data:
+            sql = "INSERT INTO product_types (type) VALUES (%s)"
+            self.cursor_obj.execute(sql, product_type)
 
 
     def insert_products(self):
@@ -29,6 +30,7 @@ class DataMocking:
                 type_id = vegetable_id
             else:
                 type_id = cereal_id
+            
             self.cursor_obj.execute("INSERT INTO products (type_id, name, description) VALUES (%s, %s, %s)",\
                 (type_id, product[0], product[1]))
 
@@ -94,26 +96,41 @@ class DataMocking:
         self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
         records = self.cursor_obj.fetchall()
         used_records = {}
+        print(f"used_records = {used_records}")
         years_duration = tuple((i for i in range(1, duration + 1)))
         for record in records:
             field_id = record[2]
+            print(f"record = {record}")
+            print(f"field_id = {field_id}")
             if field_id in used_records.keys():
                 if len(used_records[field_id]) >= duration:
+                    print("it is if")
                     continue
                 elif len(used_records[field_id]) == 1:
                     years_range = tuple(x for x in years_duration if x != used_records[field_id][0])
                     rand_year = random.choice(years_range)
                     used_records[field_id].append(rand_year)
+                    print(f"years_range = {years_range}")
+                    print(f"rand_year = {rand_year}")
+                    print(f"used_records = {used_records}")
                 else:
                     years_range = tuple(item for item in years_duration if item not in used_records[field_id])
                     rand_year = random.choice(years_range)
                     used_records[field_id].append(rand_year)
+                    print(f"years_range = {years_range}")
+                    print(f"rand_year = {rand_year}")
+                    print(f"used_records = {used_records}")
             else:
                 rand_year = random.choice(years_duration)
                 used_records[field_id] = [rand_year]
+                print(f"rand_year = {rand_year}")
+                print(f"used_records = {used_records}")
             self.cursor_obj.execute(f"SELECT name FROM products WHERE id = {record[1]}")
             product_name = self.cursor_obj.fetchone()[0]
+            print(f"product_name = {product_name}")
             crop_info = self.get_crops_and_months_by_product_name(products_armenia, product_name)
+            print(f"crop_info = {crop_info}")
+            print("\n\n")
             if crop_info is None:
                 continue
             min_crop_count, max_crop_count, min_month, max_month = crop_info
