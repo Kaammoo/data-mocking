@@ -132,9 +132,9 @@ class DataMocking:
             record_id = record[0]
             self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
             field_size = self.cursor_obj.fetchone()[0]
-            workers_count = field_size // 100
+            workers_count = field_size // 10
             if workers_count > 9:
-                workers_count -= random.randint(0, 3)
+                workers_count -= random.randint(0, 2)
             else:
                 workers_count += random.randint(0, 2)
             crop_count = (field_size * random.randint(min_crop_count, max_crop_count)) / 1000
@@ -178,9 +178,9 @@ class DataMocking:
                             field_id = record[2]
                             self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
                             field_size = self.cursor_obj.fetchone()[0]
-                            workers_count = field_size // 100
+                            workers_count = field_size // 10
                             if workers_count > 9:
-                                workers_count -= random.randint(0, 3)
+                                workers_count -= random.randint(0, 2)
                             else:
                                 workers_count += random.randint(0, 2)
                             product_yield = field_size * random.randint(min_yield, max_yield)
