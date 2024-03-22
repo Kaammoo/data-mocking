@@ -82,7 +82,14 @@ class DataMocking:
         for product in products:
             if product[0] == product_name:
                 return product[2], product[3], product[4], product[5]
-        return None 
+        return None
+
+
+    def get_growth_duration_and_min_max_yield_by_product_name(self, products, product_name):
+        for product in products:
+            if product[0] == product_name:
+                return product[6], product[7], product[10], product[11]
+        return None
 
 
     def random_date_within_months(self, min_month, max_month, year):
@@ -96,41 +103,28 @@ class DataMocking:
         self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
         records = self.cursor_obj.fetchall()
         used_records = {}
-        print(f"used_records = {used_records}")
         years_duration = tuple((i for i in range(1, duration + 1)))
         for record in records:
             field_id = record[2]
-            print(f"record = {record}")
-            print(f"field_id = {field_id}")
             if field_id in used_records.keys():
                 if len(used_records[field_id]) >= duration:
-                    print("it is if")
                     continue
                 elif len(used_records[field_id]) == 1:
                     years_range = tuple(x for x in years_duration if x != used_records[field_id][0])
                     rand_year = random.choice(years_range)
                     used_records[field_id].append(rand_year)
-                    print(f"years_range = {years_range}")
-                    print(f"rand_year = {rand_year}")
-                    print(f"used_records = {used_records}")
                 else:
                     years_range = tuple(item for item in years_duration if item not in used_records[field_id])
                     rand_year = random.choice(years_range)
                     used_records[field_id].append(rand_year)
-                    print(f"years_range = {years_range}")
-                    print(f"rand_year = {rand_year}")
-                    print(f"used_records = {used_records}")
             else:
                 rand_year = random.choice(years_duration)
                 used_records[field_id] = [rand_year]
-                print(f"rand_year = {rand_year}")
-                print(f"used_records = {used_records}")
             self.cursor_obj.execute(f"SELECT name FROM products WHERE id = {record[1]}")
             product_name = self.cursor_obj.fetchone()[0]
-            print(f"product_name = {product_name}")
+            
             crop_info = self.get_crops_and_months_by_product_name(products_armenia, product_name)
-            print(f"crop_info = {crop_info}")
-            print("\n\n")
+            
             if crop_info is None:
                 continue
             min_crop_count, max_crop_count, min_month, max_month = crop_info
@@ -144,10 +138,56 @@ class DataMocking:
             else:
                 workers_count += random.randint(0, 2)
             crop_count = (field_size * random.randint(min_crop_count, max_crop_count)) / 1000
-
             self.cursor_obj.execute("INSERT INTO plantings (record_id, crop_quantity, date, workers_quantity) VALUES (%s, %s, %s, %s)",
                                     (record_id, crop_count, random_date_generated, workers_count))
 
+
+    def insert_harvest(self):
+        self.cursor_obj.execute("SELECT record_id, crop_quantity, date FROM plantings")
+        plantings_data = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
+        records = self.cursor_obj.fetchall()
+        self.cursor_obj.execute(f"SELECT id, name FROM products")
+        products = self.cursor_obj.fetchall()
+        for planting in plantings_data:
+            planting_record_id = planting[0]
+            planting_crop_quantity = planting[1]
+            planting_date = planting[2]
+            for record in records:
+                record_id = record[0]
+                if planting_record_id == record_id:
+                    record_product_id = record[1]
+                    for product in products:
+                        product_id = product[0]
+                        if record_product_id == product_id:
+                            product_name = product[1]
+                            min_growth_duration, max_growth_duration, min_yield, max_yield = \
+                                self.get_growth_duration_and_min_max_yield_by_product_name(products_armenia, product_name)
+                            rand_day = random.randint(min_growth_duration, max_growth_duration)
+                            harvest_date_day = planting_date.day + rand_day
+                            planting_date_month = planting_date.month
+                            harvest_year = planting_date.year
+                            if harvest_date_day > 28:
+                                harvest_day = harvest_date_day % 28
+                                harvest_month = harvest_date_day // 28
+                            if (planting_date_month + harvest_month) > 12:
+                                harvest_year += 1
+                                harvest_month = (planting_date_month + harvest_month) % 12
+                            if harvest_day == 0:
+                                harvest_day += 1
+                            harvest_date = datetime(harvest_year, harvest_month, harvest_day)
+                            field_id = record[2]
+                            self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
+                            field_size = self.cursor_obj.fetchone()[0]
+                            workers_count = field_size // 100
+                            if workers_count > 9:
+                                workers_count -= random.randint(0, 3)
+                            else:
+                                workers_count += random.randint(0, 2)
+                            product_yield = field_size * random.randint(min_yield, max_yield)
+                            self.cursor_obj.execute("INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",\
+                                    (record_id, product_yield, harvest_date, field_size, workers_count))
+                            
         con.commit()
         self.cursor_obj.close()
         con.close()
