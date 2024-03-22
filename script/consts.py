@@ -2,27 +2,28 @@ max_field_count = 30
 min_field_count = 15
 max_field_size = 150
 min_field_size = 30
-duration = 5
+duration = 5 
 portable_device_data = (
-    "BelAZ 75710", "KAMAZ-65225", "MAZ-6501", "KrAZ-7140H6", "URAL-5557",
+    {"truck":("BelAZ 75710", "KAMAZ-65225", "MAZ-6501", "KrAZ-7140H6", "URAL-5557",
     "BelAZ 75302", "KAMAZ-65228", "MAZ-6516", "KrAZ-65101", "URAL-4320",
     "BelAZ 7555", "KAMAZ-65801", "MAZ-6517", "KrAZ-65053", "URAL-55571",
     "BelAZ 75131", "KAMAZ-65115", "MAZ-65115", "KrAZ-6322", "URAL-55572",
     "BelAZ 7557", "KAMAZ-6520", "MAZ-5551", "KrAZ-65055", "URAL-43206",
     "BelAZ 75135", "KAMAZ-65802", "MAZ-6515", "KrAZ-65032", "URAL-55573",
-    "ZIL 130", "ZIL 4331", "ZIL 164", "Shovel", "Spade", "Rake", "Hoe",
-    "Tractor Belarus 820", "Tractor MTZ-1221", "Tractor Kirovets K-744", 
+    "ZIL 130", "ZIL 4331", "ZIL 164"), 
+    "instrument":("Shovel", "Spade", "Rake", "Hoe"),
+    "tractor":("Tractor Belarus 820", "Tractor MTZ-1221", "Tractor Kirovets K-744", 
     "Tractor T-150K", "Tractor DT-75", "Tractor YUMZ-6", "Tractor KhTZ-181",
     "Tractor T-25", "Tractor T-40", "Tractor LTZ T-170", "Tractor DT-75M",
     "Tractor YUMZ-6K", "Tractor Belarus 1025", "Tractor MTZ-80", "Tractor T-16",
-    "Tractor K-700A", "Tractor Belarus 892", "Tractor T-150", "Tractor MTZ-52",
-    "Tractor T-70", "Combine Bizon Z056", "Combine Niva SK-5",
+    "Tractor K-700A", "Tractor Belarus 892", "Tractor T-150", "Tractor MTZ-52","Tractor T-70"),
+    "combine":("Combine Bizon Z056", "Combine Niva SK-5",
     "Combine Yenisei-1200", "Combine Don-1500", "Combine PALESSE GS12",
     "Combine Slobozhanets-20", "Combine Yenisei-1200A", "Combine PALESSE GS16",
     "Combine Dnieper-7", "Combine Niva SK-6", "Combine PALESSE GS575",
     "Combine Yenisei-1200M", "Combine PALESSE GS12R", "Combine Niva SK-3",
     "Combine Don-1500B", "Combine Yenisei-1200N", "Combine PALESSE GS4118",
-    "Combine Niva SK-5M", "Combine Don-1500E", "Combine PALESSE GS4118K",
+    "Combine Niva SK-5M", "Combine Don-1500E", "Combine PALESSE GS4118K",)}
 )
 products_armenia = (
     ("Russet Potato", "Versatile and delicious vegetable.", 1500, 1800, 5, 5, 85, 95, 8, 25, 15000, 40000),

@@ -2,7 +2,7 @@ import random
 from db import con
 from consts import *
 import faker
-from datetime import datetime, timedelta
+import datetime
 
 class DataMocking:
     def __init__(self):
@@ -151,7 +151,6 @@ class DataMocking:
         products = self.cursor_obj.fetchall()
         for planting in plantings_data:
             planting_record_id = planting[0]
-            planting_crop_quantity = planting[1]
             planting_date = planting[2]
             for record in records:
                 record_id = record[0]
@@ -187,7 +186,29 @@ class DataMocking:
                             product_yield = field_size * random.randint(min_yield, max_yield)
                             self.cursor_obj.execute("INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",\
                                     (record_id, product_yield, harvest_date, field_size, workers_count))
-                            
+
+
+    def insert_portable_devices_communities(self):
+        self.cursor_obj.execute("SELECT id FROM communities")
+        communities = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT id, name FROM portable_devices")
+        portable_devices = self.cursor_obj.fetchall()
+        for community in communities:
+            community_id = community[0]
+            for portable_device in portable_devices:
+                portable_device_id = portable_device[0]
+                portable_device_name = portable_device[1]
+                if "Shovel" == portable_device_name or "Rake" == portable_device_name or \
+                    portable_device_name == "Spade" or portable_device_name == "Hoe":
+                    input_device_count = random.randint(300, 500)
+                elif "Tractor" in portable_device_name:
+                    input_device_count = random.randint(15, 25)
+                elif "Combine" in portable_device_name:
+                    input_device_count = random.randint(15, 25)
+                else:
+                    input_device_count = random.randint(1, 9)
+                self.cursor_obj.execute("INSERT INTO portable_devices_communities (portable_device_id, community_id, quantity) VALUES (%s, %s, %s)",\
+                                    (portable_device_id, community_id, input_device_count))
         con.commit()
         self.cursor_obj.close()
         con.close()
