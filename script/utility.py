@@ -2,7 +2,7 @@ import random
 from faker import Faker
 from db import con
 from consts import *
-# from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 import time
 
 
@@ -39,7 +39,58 @@ class DataMocking:
         con.commit() 
         self.cursor_obj.close()
         con.close()
-    
+        
+
+
+
+
+    def insert_weather_metrics(self):
+        self.cursor_obj.execute("""
+            SELECT p.date, h.harvest_date 
+            FROM planting p 
+            INNER JOIN harvest h ON p.record_id = h.records_id
+        """)
+        sowing_harvest_dates = self.cursor_obj.fetchall()
+
+        for sowing_date, harvest_date in sowing_harvest_dates:
+            current_date = sowing_date
+            while current_date < harvest_date:
+                month = current_date.month
+                current_season = get_season(month)
+
+                if current_season == "Summer":
+                    precipitation_types = ["rain"]
+                    temp_range = (10, 40)
+                    humidity_range = (30, 80)
+                elif current_season == "Winter":
+                    precipitation_types = ["snow", "hail"]
+                    temp_range = (-10, 5)
+                    humidity_range = (20, 70)
+                else:
+                    precipitation_types = ["rain", "snow", "hail"]
+                    temp_range = (-5, 30)
+                    humidity_range = (40, 70)
+
+                humidity = random.randint(*humidity_range)
+                temperature = random.randint(*temp_range)
+                prec_type = random.choice(precipitation_types, None)
+                if prec_type == "rain":
+                    rain_drop = random.randint(10, 100)
+                else:
+                    rain_drop = None
+
+                self.cursor_obj.execute("""
+                    INSERT INTO weather_metrics (rain_drop, temperature, humidity, prec_type_id, date)
+                    VALUES (%s, %s, %s, (SELECT id FROM prec_types WHERE name = %s), %s)
+                """, (rain_drop, temperature, humidity, prec_type, current_date))
+
+                current_date += datetime.timedelta(days=1)
+
+        con.commit()
+        self.cursor_obj.close()
+        con.close()
+
+        
     def insert_product_type(self):
         self.cursor_obj.execute("SELECT id FROM products")
         product_type_data = [
