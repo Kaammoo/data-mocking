@@ -93,10 +93,10 @@ class DataMocking:
 
 
     def random_date_within_months(self, min_month, max_month, year):
-        date_year = datetime.now().year - year
+        date_year = datetime.datetime.now().year - year
         month = random.randint(min_month, max_month)
         day = random.randint(1, 28)
-        return datetime(date_year, month, day)
+        return datetime.datetime(date_year, month, day)
 
 
     def insert_plantings(self):
@@ -174,7 +174,7 @@ class DataMocking:
                                 harvest_month = (planting_date_month + harvest_month) % 12
                             if harvest_day == 0:
                                 harvest_day += 1
-                            harvest_date = datetime(harvest_year, harvest_month, harvest_day)
+                            harvest_date = datetime.datetime(harvest_year, harvest_month, harvest_day)
                             field_id = record[2]
                             self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
                             field_size = self.cursor_obj.fetchone()[0]
@@ -200,15 +200,51 @@ class DataMocking:
                 portable_device_name = portable_device[1]
                 if "Shovel" == portable_device_name or "Rake" == portable_device_name or \
                     portable_device_name == "Spade" or portable_device_name == "Hoe":
-                    input_device_count = random.randint(300, 500)
+                    input_device_count = random.randint(100, 200)
                 elif "Tractor" in portable_device_name:
-                    input_device_count = random.randint(15, 25)
+                    input_device_count = random.randint(10, 20)
                 elif "Combine" in portable_device_name:
-                    input_device_count = random.randint(15, 25)
+                    input_device_count = random.randint(10, 20)
                 else:
                     input_device_count = random.randint(1, 9)
                 self.cursor_obj.execute("INSERT INTO portable_devices_communities (portable_device_id, community_id, quantity) VALUES (%s, %s, %s)",\
                                     (portable_device_id, community_id, input_device_count))
+
+
+    def insert_planting_devices(self):
+        self.cursor_obj.execute("SELECT id FROM plantings")
+        plantings = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT id, quantity FROM portable_devices_communities")
+        portable_devices_communities = self.cursor_obj.fetchall()
+        for planting in plantings:
+            planting_id = planting[0]
+            for portable_device_community in portable_devices_communities:
+                portable_device_community_id = portable_device_community[0]
+                portable_device_community_quantity = portable_device_community[1]
+                if portable_device_community_quantity > 7:
+                    insert_quantity = random.randint(0, portable_device_community_quantity // 4)
+                else:
+                    insert_quantity = random.randint(0, portable_device_community_quantity)
+                self.cursor_obj.execute("INSERT INTO planting_devices (planting_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
+                                    (planting_id, portable_device_community_id, insert_quantity))
+
+
+    def insert_harvest_devices(self):
+        self.cursor_obj.execute("SELECT id FROM harvests")
+        harvests = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT id, quantity FROM portable_devices_communities")
+        portable_devices_communities = self.cursor_obj.fetchall()
+        for harvest in harvests:
+            harvest_id = harvest[0]
+            for portable_device_community in portable_devices_communities:
+                portable_device_community_id = portable_device_community[0]
+                portable_device_community_quantity = portable_device_community[1]
+                if portable_device_community_quantity > 7:
+                    insert_quantity = random.randint(0, portable_device_community_quantity // 4)
+                else:
+                    insert_quantity = random.randint(0, portable_device_community_quantity)
+                self.cursor_obj.execute("INSERT INTO harvest_devices (harvest_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
+                                    (harvest_id, portable_device_community_id, insert_quantity))
         con.commit()
         self.cursor_obj.close()
         con.close()
