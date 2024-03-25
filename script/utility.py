@@ -100,8 +100,60 @@ class DataMocking:
         con.commit()
         self.cursor_obj.close()
         con.close()
+        
+    def calculate_yield(self):
+        self.cursor_obj.execute("""
+            SELECT record_id, avg_temperature, other_factors, water_amount, fertilizer_quantity
+            FROM cultivations
+        """)
+        cultivation_records = self.cursor_obj.fetchall()
+        
+        for record in cultivation_records:
+            record_id, avg_temp, other_factors, avg_water_amount, avg_fertilizer_quantity = record
+
+            self.cursor_obj.execute("""
+                SELECT p.name
+                FROM records r
+                JOIN products p ON r.product_id = p.id
+                WHERE r.id = %s
+            """, (record_id,))
+            product_name = self.cursor_obj.fetchone()[0]
+
+            self.cursor_obj.execute("""
+                SELECT yield
+                FROM harvests
+                WHERE record_id = %s
+            """,(record_id,))
+            old_yield = self.cursor_obj.fetchone()[0]
+            
+            change = 0
+            for product in products_armenia:
+                if product[0] == product_name:
+                    if avg_fertilizer_quantity - product[12] > avg_fertilizer_quantity - product[13]:
+                        change -= 0.1
+                    else:
+                        change -= 0.3
+                    if avg_temp - product[8] > avg_temp - product[9]:
+                        change += 0.3
+                    elif avg_temp - product[8] < avg_temp - product[9]:
+                        change += 0.1
+                    break
+
+            change += other_factors
+
+            new_yield = old_yield - old_yield * change / 100
+
+            self.cursor_obj.execute("""
+                UPDATE harvests
+                SET yield = %s
+                WHERE record_id = %s
+            """, (new_yield, record_id))
+
+        con.commit()
 
 
+        
+        
     def insert_weather_metrics(self):
         self.cursor_obj.execute("""
             SELECT p.date, r.community_id
@@ -156,10 +208,51 @@ class DataMocking:
                     """, (community_id, rain_drop, humidity, temperature, prec_type, current_date))
 
                     current_date += datetime.timedelta(days=1)
+                    
+            # acres_cut = calculate_acres_cut(community_id, temperature, humidity, precipitation_types)
+
+            # self.cursor_obj.execute("""
+            #     UPDATE harvests
+            #     SET acres_cut = %s
+            #     WHERE record_id = %s
+            #         AND date = %s
+            # """, (acres_cut, record_id, corresponding_harvest_date))
+        
+        
 
         con.commit()
         self.cursor_obj.close()
         con.close()
+    def calculate_and_update_acres_cut(self):
+        self.cursor_obj.execute("""
+            SELECT record_id, community_id, date
+            FROM harvests
+        """)
+        harvest_data = self.cursor_obj.fetchall()
+        # self.cursor_obj.execute("SELECT ")
+
+        for record_id, community_id, harvest_date in harvest_data:
+            self.cursor_obj.execute("""
+                SELECT AVG(temperature), AVG(humidity)
+                FROM weather_metrics
+                WHERE community_id = %s AND date = %s
+            """, (community_id, harvest_date))
+            avg_temp, avg_humidity = self.cursor_obj.fetchone()
+
+            if avg_temp is None or avg_humidity is None:
+                continue
+
+            # Perform calculations based on avg_temp, avg_humidity, and other factors
+            # For example:
+            acres_cut = avg_temp * avg_humidity / 10
+
+            self.cursor_obj.execute("""
+                UPDATE harvests
+                SET acres_cut = %s
+                WHERE record_id = %s AND date = %s
+            """, (acres_cut, record_id, harvest_date))
+
+        con.commit()
 
 
 
@@ -210,7 +303,22 @@ class DataMocking:
         self.cursor_obj.close()
         con.close()
 
+    def insert_revenue(self):
+        self.cursor_obj.execute("SELECT id, yield, date FROM harvests")
+        harvests = self.cursor_obj.fetchall()
 
+        for harvest_id, yield_amount, harvest_date in harvests:
+            amount = round(yield_amount * random.uniform(10, 50), 2)
+            revenue_date = harvest_date + datetime.timedelta(days=random.randint(5, 10))
+
+            self.cursor_obj.execute("""
+                INSERT INTO revenues (harvest_id, amount, date)
+                VALUES (%s, %s, %s)
+            """, (harvest_id, amount, revenue_date))
+
+        con.commit()
+        self.cursor_obj.close()
+        con.close()
 
     def insert_records(self):
         self.cursor_obj.execute("SELECT * FROM communities")
@@ -307,7 +415,14 @@ class DataMocking:
                 WHERE community_id = %s AND date BETWEEN %s AND %s
             """, (community_id, start_date, end_date))
             avg_humidity, avg_temp = self.cursor_obj.fetchone()
+            self.cursor_obj.execute("""
+                SELECT AVG(rain_drop) 
+                FROM weather_metrics 
+                WHERE community_id = %s AND date BETWEEN %s AND %s
+            """, (community_id, start_date, end_date))
+            water_amount = self.cursor_obj.fetchone()
 
+            # TODO Remove
             if avg_humidity is None or avg_temp is None:
                 continue
 
@@ -318,22 +433,15 @@ class DataMocking:
             """, (record_id,))
             workers_quantity = self.cursor_obj.fetchone()[0]
 
-            self.cursor_obj.execute("""
-                SELECT crop_quantity 
-                FROM plantings 
-                WHERE record_id = %s
-            """, (record_id,))
-            crop_quantity = self.cursor_obj.fetchone()[0]
-
             other_factors = round(random.uniform(0.1, 0.49), 2)
-            fertilizer_quantity = (avg_humidity + avg_temp) * 0.5
-            water_amount = crop_quantity * (1 + workers_quantity * 0.1)
+            fertilizer_quantity = random(products_armenia[12],products_armenia[13])
 
             self.cursor_obj.execute("""
                 INSERT INTO cultivations (record_id, start_date, end_date, avg_humidity, avg_temperature, fertilizer_quantity, water_amount, workers_quantity, other_factors)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (record_id, start_date, end_date, round(avg_humidity,2), round(avg_temp, 2), round(fertilizer_quantity, 2), round(water_amount,2), workers_quantity, other_factors))
 
+        self.calculate_yield()
         con.commit()
         self.cursor_obj.close()
         con.close()
