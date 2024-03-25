@@ -11,4 +11,7 @@ def run():
     project.insert_portable_devices_communities()
     project.insert_planting_devices()
     project.insert_harvest_devices()
+    project.insert_weather_metrics()
+    project.insert_cultivation()
+    project.insert_cultivation_devices()
 run()
