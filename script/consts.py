@@ -69,15 +69,3 @@ products_armenia = (
     ("Green Bean", "Crunchy and tender green beans vegetable.", 7500, 8000, 4 , 5, 65, 120, 10, 12, 20000, 21000, 100, 150),
 )    
 
-
-
-
-def get_season(month):
-    if month in range(3, 6):
-        return "Spring"
-    elif month in range(6, 9):
-        return "Summer"
-    elif month in range(9, 12):
-        return "Autumn"
-    else:
-        return "Winter"
