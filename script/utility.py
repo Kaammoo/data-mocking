@@ -4,7 +4,7 @@ from db import con
 from consts import *
 import datetime
 import time
-import pytz
+
 
 class DataMocking:
     def __init__(self):
@@ -103,6 +103,7 @@ class DataMocking:
                 """,
                     (record_id, category_id, amount, expense_date),
                 )
+
     def insert_portable_devices_communities(self):
         self.cursor_obj.execute("SELECT id FROM communities")
         communities = self.cursor_obj.fetchall()
@@ -113,8 +114,12 @@ class DataMocking:
             for portable_device in portable_devices:
                 portable_device_id = portable_device[0]
                 portable_device_name = portable_device[1]
-                if "Shovel" == portable_device_name or "Rake" == portable_device_name or \
-                    portable_device_name == "Spade" or portable_device_name == "Hoe":
+                if (
+                    "Shovel" == portable_device_name
+                    or "Rake" == portable_device_name
+                    or portable_device_name == "Spade"
+                    or portable_device_name == "Hoe"
+                ):
                     input_device_count = random.randint(100, 200)
                 elif "Tractor" in portable_device_name:
                     input_device_count = random.randint(10, 20)
@@ -122,9 +127,10 @@ class DataMocking:
                     input_device_count = random.randint(10, 20)
                 else:
                     input_device_count = random.randint(1, 9)
-                self.cursor_obj.execute("INSERT INTO portable_devices_communities (portable_device_id, community_id, quantity) VALUES (%s, %s, %s)",\
-                                    (portable_device_id, community_id, input_device_count))
-
+                self.cursor_obj.execute(
+                    "INSERT INTO portable_devices_communities (portable_device_id, community_id, quantity) VALUES (%s, %s, %s)",
+                    (portable_device_id, community_id, input_device_count),
+                )
 
     def insert_planting_devices(self):
         self.cursor_obj.execute("SELECT id FROM plantings")
@@ -137,12 +143,18 @@ class DataMocking:
                 portable_device_community_id = portable_device_community[0]
                 portable_device_community_quantity = portable_device_community[1]
                 if portable_device_community_quantity > 7:
-                    insert_quantity = random.randint(0, portable_device_community_quantity // 4)
+                    insert_quantity = random.randint(
+                        0, portable_device_community_quantity // 4
+                    )
                 else:
-                    insert_quantity = random.randint(0, portable_device_community_quantity)
-                self.cursor_obj.execute("INSERT INTO planting_devices (planting_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
-                                    (planting_id, portable_device_community_id, insert_quantity))
-
+                    insert_quantity = random.randint(
+                        0, portable_device_community_quantity
+                    )
+                if insert_quantity > 0:
+                    self.cursor_obj.execute(
+                        "INSERT INTO planting_devices (planting_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
+                        (planting_id, portable_device_community_id, insert_quantity),
+                    )
 
     def insert_harvest_devices(self):
         self.cursor_obj.execute("SELECT id FROM harvests")
@@ -155,11 +167,19 @@ class DataMocking:
                 portable_device_community_id = portable_device_community[0]
                 portable_device_community_quantity = portable_device_community[1]
                 if portable_device_community_quantity > 7:
-                    insert_quantity = random.randint(0, portable_device_community_quantity // 4)
+                    insert_quantity = random.randint(
+                        0, portable_device_community_quantity // 4
+                    )
                 else:
-                    insert_quantity = random.randint(0, portable_device_community_quantity)
-                self.cursor_obj.execute("INSERT INTO harvest_devices (harvest_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
-                                    (harvest_id, portable_device_community_id, insert_quantity))
+                    insert_quantity = random.randint(
+                        0, portable_device_community_quantity
+                    )
+                if insert_quantity > 0:
+
+                    self.cursor_obj.execute(
+                        "INSERT INTO harvest_devices (harvest_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
+                        (harvest_id, portable_device_community_id, insert_quantity),
+                    )
 
     def calculate_yield(self):
         self.cursor_obj.execute(
@@ -291,9 +311,6 @@ class DataMocking:
                     )
 
                     current_date += datetime.timedelta(days=1)
-        con.commit()
-        
-
 
     def insert_product_type(self):
         self.cursor_obj.execute("SELECT id FROM products")
@@ -432,8 +449,6 @@ class DataMocking:
         """
         )
         sowing_harvest_record_dates = self.cursor_obj.fetchall()
-        print(sowing_harvest_record_dates)
-        # 2020-03-22 00:00:00.000 +0400
         for sowing_date, harvest_date, record_id in sowing_harvest_record_dates:
             start_date = sowing_date.strftime("%Y-%m-%d %H:%M:%S.%s %z")
             end_date = harvest_date.strftime("%Y-%m-%d %H:%M:%S.%s %z")
@@ -447,21 +462,13 @@ class DataMocking:
                 (record_id,),
             )
             community_id = self.cursor_obj.fetchone()[0]
-            print(f"{community_id = }")
-            print(f"{start_date = }")
-            print(f"{end_date = }")
-
             query = f"""
                 SELECT AVG(humidity), AVG(temperature) 
                 FROM weather_metrics 
                 WHERE community_id = {community_id} AND date BETWEEN '{start_date}' AND '{end_date}'
             """
-            print(f"{query = }")
             self.cursor_obj.execute(query)
             avg_humidity, avg_temp = self.cursor_obj.fetchone()
-            print(f"{avg_humidity = }")
-            print(f"{avg_temp = }")
-
             self.cursor_obj.execute(
                 """
                 SELECT AVG(rain_drop)
@@ -481,48 +488,36 @@ class DataMocking:
                 (record_id,),
             )
             workers_quantity = self.cursor_obj.fetchone()[0]
-            print(f"{workers_quantity = }")
-            print(f"{avg_humidity = }")
-            print(f"{avg_temp = }")
-            print(f"{water_amount = }")
-            
-            if (
-                avg_humidity is not None
-                and avg_temp is not None
-                and water_amount is not None
-            ):
-                avg_humidity = round(avg_humidity, 2)
-                avg_temp = round(avg_temp, 2)
-                water_amount = round(water_amount, 2)
 
-                other_factors = round(random.uniform(0.1, 0.49), 2)
-                for product in products_armenia:
-                    min_count_fertilizer = product[12]
-                    max_count_fertilizer = product[13]
-                    fertilizer_quantity = round(
-                        random.randint(min_count_fertilizer, max_count_fertilizer)
-                    )
+            avg_humidity = round(avg_humidity, 2)
+            avg_temp = round(avg_temp, 2)
+            water_amount = round(water_amount, 2)
 
-                    self.cursor_obj.execute(
-                        """
-                        INSERT INTO cultivations (record_id, start_date, end_date, avg_humidity, avg_temperature, fertilizer_quantity, water_amount, workers_quantity, other_factors)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """,
-                        (
-                            record_id,
-                            start_date,
-                            end_date,
-                            avg_humidity,
-                            avg_temp,
-                            fertilizer_quantity,
-                            water_amount,
-                            workers_quantity,
-                            other_factors,
-                        ),
-                    )
-            else:
-                raise TypeError("Insert Error: line 433")
+            other_factors = round(random.uniform(0.1, 0.49), 2)
+            for product in products_armenia:
+                min_count_fertilizer = product[12]
+                max_count_fertilizer = product[13]
+                fertilizer_quantity = round(
+                    random.randint(min_count_fertilizer, max_count_fertilizer)
+                )
 
+                self.cursor_obj.execute(
+                    """
+                    INSERT INTO cultivations (record_id, start_date, end_date, avg_humidity, avg_temperature, fertilizer_quantity, water_amount, workers_quantity, other_factors)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                    (
+                        record_id,
+                        start_date,
+                        end_date,
+                        avg_humidity,
+                        avg_temp,
+                        fertilizer_quantity,
+                        water_amount,
+                        workers_quantity,
+                        other_factors,
+                    ),
+                )
 
     def insert_plantings(self):
         self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
@@ -579,7 +574,7 @@ class DataMocking:
                 "INSERT INTO plantings (record_id, crop_quantity, date, workers_quantity) VALUES (%s, %s, %s, %s)",
                 (record_id, crop_count, random_date_generated, workers_count),
             )
-            
+
     def insert_harvest(self):
         self.cursor_obj.execute("SELECT record_id, crop_quantity, date FROM plantings")
         plantings_data = self.cursor_obj.fetchall()
@@ -598,165 +593,76 @@ class DataMocking:
                         product_id = product[0]
                         if record_product_id == product_id:
                             product_name = product[1]
-                            min_growth_duration, max_growth_duration, min_yield, max_yield = \
-                                self.get_growth_duration_and_min_max_yield_by_product_name(products_armenia, product_name)
-                            rand_day = random.randint(min_growth_duration, max_growth_duration)
+                            (
+                                min_growth_duration,
+                                max_growth_duration,
+                                min_yield,
+                                max_yield,
+                            ) = self.get_growth_duration_and_min_max_yield_by_product_name(
+                                products_armenia, product_name
+                            )
+                            rand_day = random.randint(
+                                min_growth_duration, max_growth_duration
+                            )
                             harvest_date_day = planting_date.day + rand_day
                             planting_date_month = planting_date.month
                             harvest_year = planting_date.year
-                            if harvest_date_day > 28:
+                            harvest_month = planting_date.month
+                            if harvest_date_day >= 28:
                                 harvest_day = harvest_date_day % 28
-                                harvest_month = harvest_date_day // 28
-                            if (planting_date_month + harvest_month) > 12:
+                                harvest_month = (
+                                    harvest_date_day // 28 + planting_date_month
+                                )
+                            if (planting_date_month + harvest_month) >= 12:
                                 harvest_year += 1
-                                harvest_month = (planting_date_month + harvest_month) % 12
+                                harvest_month = (
+                                    planting_date_month + harvest_month
+                                ) % 12
                             if harvest_day == 0:
                                 harvest_day += 1
-                            harvest_date = datetime.datetime(harvest_year, harvest_month, harvest_day)
+                            if harvest_month == 0:
+                                harvest_month += 1
+                            harvest_date = datetime.datetime(
+                                harvest_year, harvest_month, harvest_day
+                            )
                             field_id = record[2]
-                            self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
+                            self.cursor_obj.execute(
+                                f"SELECT size FROM fields WHERE id = {field_id}"
+                            )
                             field_size = self.cursor_obj.fetchone()[0]
                             workers_count = field_size // 10
                             if workers_count > 9:
                                 workers_count -= random.randint(0, 2)
                             else:
                                 workers_count += random.randint(0, 2)
-                            product_yield = field_size * random.randint(min_yield, max_yield)
-                            self.cursor_obj.execute("INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",\
-                                    (record_id, product_yield, harvest_date, field_size, workers_count))
-    # def insert_harvest(self):
-    #     self.cursor_obj.execute("SELECT record_id, crop_quantity, date FROM plantings")
-    #     plantings_data = self.cursor_obj.fetchall()
-    #     self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
-    #     records = self.cursor_obj.fetchall()
-    #     self.cursor_obj.execute(f"SELECT id, name FROM products")
-    #     products = self.cursor_obj.fetchall()
-        
-    #     # Define UTC timezone
-    #     utc = pytz.UTC
-        
-    #     for planting in plantings_data:
-    #         planting_record_id = planting[0]
-    #         planting_date = planting[2].replace(tzinfo=utc)  # Make planting_date aware
-            
-    #         for record in records:
-    #             record_id = record[0]
-                
-    #             if planting_record_id == record_id:
-    #                 record_product_id = record[1]
-                    
-    #                 for product in products:
-    #                     product_id = product[0]
-                        
-    #                     if record_product_id == product_id:
-    #                         product_name = product[1]
-    #                         min_growth_duration, max_growth_duration, min_yield, max_yield = \
-    #                             self.get_growth_duration_and_min_max_yield_by_product_name(products_armenia, product_name)
-                            
-    #                         rand_day = random.randint(min_growth_duration, max_growth_duration)
-    #                         harvest_date_day = planting_date.day + rand_day
-    #                         planting_date_month = planting_date.month
-    #                         harvest_year = planting_date.year
-                            
-    #                         if harvest_date_day > 28:
-    #                             harvest_day = harvest_date_day % 28
-    #                             harvest_month = harvest_date_day // 28
-                                
-    #                         if (planting_date_month + harvest_month) > 12:
-    #                             harvest_year += 1
-    #                             harvest_month = (planting_date_month + harvest_month) % 12
-                                
-    #                         if harvest_day == 0:
-    #                             harvest_day += 1
-                                
-    #                         harvest_date = datetime.datetime(harvest_year, harvest_month, harvest_day, tzinfo=utc)
-                            
-    #                         if harvest_date < planting_date:
-    #                             continue
-                            
-    #                         field_id = record[2]
-    #                         self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
-    #                         field_size = self.cursor_obj.fetchone()[0]
-    #                         workers_count = field_size // 10
-                            
-    #                         if workers_count > 9:
-    #                             workers_count -= random.randint(0, 2)
-    #                         else:
-    #                             workers_count += random.randint(0, 2)
-                                
-    #                         product_yield = field_size * random.randint(min_yield, max_yield)
-    #                         self.cursor_obj.execute("INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",\
-    #                                 (record_id, product_yield, harvest_date, field_size, workers_count))
-                                    
-    def get_growth_duration_and_min_max_yield_by_product_name(self, products, product_name):
+                            product_yield = field_size * random.randint(
+                                min_yield, max_yield
+                            )
+                            planting_date = planting_date.strftime(
+                                "%Y-%m-%d %H:%M:%S.%s %z"
+                            )
+                            harvest_date = harvest_date.strftime(
+                                "%Y-%m-%d %H:%M:%S.%s %z"
+                            )
+                            self.cursor_obj.execute(
+                                "INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",
+                                (
+                                    record_id,
+                                    product_yield,
+                                    harvest_date,
+                                    field_size,
+                                    workers_count,
+                                ),
+                            )
+
+    def get_growth_duration_and_min_max_yield_by_product_name(
+        self, products, product_name
+    ):
         for product in products:
             if product[0] == product_name:
                 return product[6], product[7], product[10], product[11]
         return None
 
-    # def insert_harvest(self):
-    #     self.cursor_obj.execute("SELECT record_id, crop_quantity, date FROM plantings")
-    #     plantings_data = self.cursor_obj.fetchall()
-    #     self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
-    #     records = self.cursor_obj.fetchall()
-    #     self.cursor_obj.execute(f"SELECT id, name FROM products")
-    #     products = self.cursor_obj.fetchall()
-        
-    #     # Define UTC timezone
-    #     utc = pytz.UTC
-        
-    #     for planting in plantings_data:
-    #         planting_record_id = planting[0]
-    #         planting_date = planting[2].replace(tzinfo=utc)  # Make planting_date aware
-            
-    #         for record in records:
-    #             record_id = record[0]
-                
-    #             if planting_record_id == record_id:
-    #                 record_product_id = record[1]
-                    
-    #                 for product in products:
-    #                     product_id = product[0]
-                        
-    #                     if record_product_id == product_id:
-    #                         product_name = product[1]
-    #                         min_growth_duration, max_growth_duration, min_yield, max_yield = \
-    #                             self.get_growth_duration_and_min_max_yield_by_product_name(products_armenia, product_name)
-                            
-    #                         rand_day = random.randint(min_growth_duration, max_growth_duration)
-    #                         harvest_date_day = planting_date.day + rand_day
-    #                         planting_date_month = planting_date.month
-    #                         harvest_year = planting_date.year
-                            
-    #                         if harvest_date_day > 28:
-    #                             harvest_day = harvest_date_day % 28
-    #                             harvest_month = harvest_date_day // 28
-                                
-    #                         if (planting_date_month + harvest_month) > 12:
-    #                             harvest_year += 1
-    #                             harvest_month = (planting_date_month + harvest_month) % 12
-                                
-    #                         if harvest_day == 0:
-    #                             harvest_day += 1
-                                
-    #                         harvest_date = datetime.datetime(harvest_year, harvest_month, harvest_day, tzinfo=utc)
-                            
-    #                         if harvest_date < planting_date:
-    #                             continue
-                            
-    #                         field_id = record[2]
-    #                         self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
-    #                         field_size = self.cursor_obj.fetchone()[0]
-    #                         workers_count = field_size // 10
-                            
-    #                         if workers_count > 9:
-    #                             workers_count -= random.randint(0, 2)
-    #                         else:
-    #                             workers_count += random.randint(0, 2)
-                                
-    #                         product_yield = field_size * random.randint(min_yield, max_yield)
-    #                         self.cursor_obj.execute("INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",\
-    #                                 (record_id, product_yield, harvest_date, field_size, workers_count))
     def insert_cultivation_devices(self):
         self.cursor_obj.execute("SELECT id FROM cultivations")
         cultivations = self.cursor_obj.fetchall()
@@ -768,17 +674,30 @@ class DataMocking:
                 portable_device_community_id = portable_device_community[0]
                 portable_device_community_quantity = portable_device_community[1]
                 if 8 > portable_device_community_quantity > 3:
-                    insert_quantity = random.randint(0, portable_device_community_quantity // 3)
+                    insert_quantity = random.randint(
+                        0, portable_device_community_quantity // 3
+                    )
                 elif 12 > portable_device_community_quantity > 7:
-                    insert_quantity = random.randint(0, portable_device_community_quantity // 4)
+                    insert_quantity = random.randint(
+                        0, portable_device_community_quantity // 4
+                    )
                 elif 25 > portable_device_community_quantity > 11:
-                    insert_quantity = random.randint(0, portable_device_community_quantity // 6)
+                    insert_quantity = random.randint(
+                        0, portable_device_community_quantity // 6
+                    )
                 elif portable_device_community_quantity > 24:
-                    insert_quantity = random.randint(0, portable_device_community_quantity // 10)
+                    insert_quantity = random.randint(
+                        0, portable_device_community_quantity // 10
+                    )
                 else:
-                    insert_quantity = random.randint(0, portable_device_community_quantity)
-                self.cursor_obj.execute("INSERT INTO cultivation_devices (cultivation_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
-                                    (cultivation_id, portable_device_community_id, insert_quantity))
+                    insert_quantity = random.randint(
+                        0, portable_device_community_quantity
+                    )
+                if insert_quantity > 0:
+                    self.cursor_obj.execute(
+                        "INSERT INTO cultivation_devices (cultivation_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
+                        (cultivation_id, portable_device_community_id, insert_quantity),
+                    )
         con.commit()
         self.cursor_obj.close()
         con.close()
