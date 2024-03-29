@@ -176,11 +176,12 @@ class DataMocking:
                             rand_day = random.randint(min_growth_duration, max_growth_duration)
                             harvest_date_day = planting_date.day + rand_day
                             planting_date_month = planting_date.month
+                            harvest_month = planting_date.month
                             harvest_year = planting_date.year
-                            if harvest_date_day > 28:
+                            if harvest_date_day >= 28:
                                 harvest_day = harvest_date_day % 28
                                 harvest_month = harvest_date_day // 28 + planting_date_month
-                            if (planting_date_month + harvest_month) > 12:
+                            if (planting_date_month + harvest_month) >= 12:
                                 harvest_year += 1
                                 harvest_month = (planting_date_month + harvest_month) % 12
                             if harvest_day == 0:
@@ -197,8 +198,8 @@ class DataMocking:
                             else:
                                 workers_count += random.randint(0, 2)
                             product_yield = field_size * random.randint(min_yield, max_yield)
-                            #self.cursor_obj.execute("INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",\
-                            #        (record_id, product_yield, harvest_date, field_size, workers_count))
+                            self.cursor_obj.execute("INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",\
+                                    (record_id, product_yield, harvest_date, field_size, workers_count))
 
 
     def insert_portable_devices_communities(self):
@@ -238,8 +239,9 @@ class DataMocking:
                     insert_quantity = random.randint(0, portable_device_community_quantity // 4)
                 else:
                     insert_quantity = random.randint(0, portable_device_community_quantity)
-                self.cursor_obj.execute("INSERT INTO planting_devices (planting_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
-                                    (planting_id, portable_device_community_id, insert_quantity))
+                if insert_quantity > 0:
+                    self.cursor_obj.execute("INSERT INTO planting_devices (planting_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
+                                        (planting_id, portable_device_community_id, insert_quantity))
 
 
     def insert_harvest_devices(self):
@@ -256,8 +258,9 @@ class DataMocking:
                     insert_quantity = random.randint(0, portable_device_community_quantity // 4)
                 else:
                     insert_quantity = random.randint(0, portable_device_community_quantity)
-                self.cursor_obj.execute("INSERT INTO harvest_devices (harvest_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
-                                    (harvest_id, portable_device_community_id, insert_quantity))
+                if insert_quantity > 0:
+                    self.cursor_obj.execute("INSERT INTO harvest_devices (harvest_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
+                                        (harvest_id, portable_device_community_id, insert_quantity))
 
 
     def insert_cultivation(self):
@@ -384,8 +387,9 @@ class DataMocking:
                     insert_quantity = random.randint(0, portable_device_community_quantity // 10)
                 else:
                     insert_quantity = random.randint(0, portable_device_community_quantity)
-                self.cursor_obj.execute("INSERT INTO cultivation_devices (cultivation_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
-                                    (cultivation_id, portable_device_community_id, insert_quantity))
+                if insert_quantity > 0:
+                    self.cursor_obj.execute("INSERT INTO cultivation_devices (cultivation_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
+                                        (cultivation_id, portable_device_community_id, insert_quantity))
         con.commit()
         self.cursor_obj.close()
         con.close()
