@@ -179,12 +179,14 @@ class DataMocking:
                             harvest_year = planting_date.year
                             if harvest_date_day > 28:
                                 harvest_day = harvest_date_day % 28
-                                harvest_month = harvest_date_day // 28
+                                harvest_month = harvest_date_day // 28 + planting_date_month
                             if (planting_date_month + harvest_month) > 12:
                                 harvest_year += 1
                                 harvest_month = (planting_date_month + harvest_month) % 12
                             if harvest_day == 0:
                                 harvest_day += 1
+                            if harvest_month == 0:
+                                harvest_month += 1
                             harvest_date = datetime.datetime(harvest_year, harvest_month, harvest_day)
                             field_id = record[2]
                             self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
@@ -195,8 +197,8 @@ class DataMocking:
                             else:
                                 workers_count += random.randint(0, 2)
                             product_yield = field_size * random.randint(min_yield, max_yield)
-                            self.cursor_obj.execute("INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",\
-                                    (record_id, product_yield, harvest_date, field_size, workers_count))
+                            #self.cursor_obj.execute("INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",\
+                            #        (record_id, product_yield, harvest_date, field_size, workers_count))
 
 
     def insert_portable_devices_communities(self):
