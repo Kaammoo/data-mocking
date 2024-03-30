@@ -1,8 +1,9 @@
 from utility import DataMocking
 
+
 def run():
     project = DataMocking()
-    project.insert_users(20)
+    project.insert_users()
     print("DOne 1")
     project.insert_measurement_units()
     print("DOne 2")
@@ -10,13 +11,13 @@ def run():
     print("DOne 3")
     project.insert_precipitation_types()
     print("DOne 4")
-    project.insert_product_type()
+    project.insert_product_types()
     print("DOne 5")
     project.insert_products()
     print("DOne 6")
     project.insert_records()
     print("DOne 7")
-    
+
     project.insert_expense_categories()
     print("DOne 8")
     project.insert_expenses()
@@ -29,16 +30,16 @@ def run():
     print("DOne 11")
     project.insert_planting_devices()
     project.insert_harvest_devices()
-    project.insert_revenue()
+    project.insert_revenues()
     print("DOne 12")
     project.insert_weather_metrics()
-    
-    
+
     print("DOne 13")
-    project.insert_cultivation()
+    project.insert_cultivations()
     print("DOne 14")
-    project.calculate_yield()
+    project.calculate_yields()
     print("DOne 15")
     project.insert_cultivation_devices()
+
 
 run()
