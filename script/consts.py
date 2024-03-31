@@ -2,6 +2,8 @@ max_field_count = 30
 min_field_count = 15
 max_field_size = 150
 min_field_size = 30
+min_users_per_community = 15
+max_users_per_community = 20
 duration = 5 
 portable_device_data = (
     {"truck":("BelAZ 75710", "KAMAZ-65225", "MAZ-6501", "KrAZ-7140H6", "URAL-5557",

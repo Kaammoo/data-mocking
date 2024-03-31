@@ -1,12 +1,45 @@
 import random
 from db import con
 from consts import *
-import faker
+from faker import Faker
 import datetime
+from time import time
 
 class DataMocking:
     def __init__(self):
         self.cursor_obj = con.cursor()
+        self.fake = Faker()
+
+
+    def insert_users(self):
+        self.cursor_obj.execute("SELECT id FROM communities")
+        communities = self.cursor_obj.fetchall()[0]
+        unique_id = str(int(time()))
+        users_per_community = random.randint(min_users_per_community, max_users_per_community)
+        for community_id in range(1, 11):
+            for _ in range(users_per_community):
+                name = self.fake.name()
+                email = self.fake.email() + f"_{unique_id}"
+                code = random.choice(["94", "98", "93", "33", "91", "99", "55", "95"])
+                phone_number = "+374" + code + self.fake.numerify("#######")
+
+                self.cursor_obj.execute(
+                    "INSERT INTO users (name, email, phone_number) VALUES (%s, %s, %s) RETURNING id",
+                    (name, email, phone_number),
+                )
+        self.cursor_obj.execute("SELECT * FROM communities")
+        communities = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT * FROM users")
+        users = self.cursor_obj.fetchall()
+        for community in communities:
+            community_id = community[0]
+            for user in users:
+                user_id = user[0]
+
+                self.cursor_obj.execute(
+                    "INSERT INTO users_communities (user_id, community_id) VALUES (%s, %s)",
+                    (user_id, community_id),
+                )
 
 
     def insert_product_type(self):
@@ -147,7 +180,7 @@ class DataMocking:
             if workers_count > 9:
                 workers_count -= random.randint(0, 2)
             else:
-                workers_count += random.randint(0, 2)
+                workers_count += random.randint(0, 4)
             crop_count = (field_size * random.randint(min_crop_count, max_crop_count)) / 1000
             self.cursor_obj.execute("INSERT INTO plantings (record_id, crop_quantity, date, workers_quantity) VALUES (%s, %s, %s, %s)",
                                     (record_id, crop_count, random_date_generated, workers_count))
@@ -264,80 +297,131 @@ class DataMocking:
 
 
     def insert_cultivation(self):
-        self.cursor_obj.execute("""
+        self.cursor_obj.execute(
+            """
             SELECT p.date, h.date, p.record_id 
             FROM plantings p 
             INNER JOIN harvests h ON p.record_id = h.record_id
-        """)
+        """
+        )
         sowing_harvest_record_dates = self.cursor_obj.fetchall()
-
         for sowing_date, harvest_date, record_id in sowing_harvest_record_dates:
-            start_date = sowing_date + datetime.timedelta(days=random.choice([1, 2]))
-            end_date = harvest_date - datetime.timedelta(days=random.choice([1, 2]))
+            start_date = sowing_date.strftime("%Y-%m-%d %H:%M:%S.%s %z")
+            end_date = harvest_date.strftime("%Y-%m-%d %H:%M:%S.%s %z")
 
-            self.cursor_obj.execute("""
+            self.cursor_obj.execute(
+                """
                 SELECT community_id 
                 FROM records 
                 WHERE id = %s
-            """, (record_id,))
+            """,
+                (record_id,),
+            )
             community_id = self.cursor_obj.fetchone()[0]
-
-            self.cursor_obj.execute("""
+            query = f"""
                 SELECT AVG(humidity), AVG(temperature) 
                 FROM weather_metrics 
-                WHERE community_id = %s AND date BETWEEN %s AND %s
-            """, (community_id, start_date, end_date))
+                WHERE community_id = {community_id} AND date BETWEEN '{start_date}' AND '{end_date}'
+            """
+            self.cursor_obj.execute(query)
             avg_humidity, avg_temp = self.cursor_obj.fetchone()
-            self.cursor_obj.execute("""
-                SELECT AVG(rain_drop) 
-                FROM weather_metrics 
+            self.cursor_obj.execute(
+                """
+                SELECT AVG(rain_drop)
+                FROM weather_metrics
                 WHERE community_id = %s AND date BETWEEN %s AND %s
-            """, (community_id, start_date, end_date))
-            water_amount = self.cursor_obj.fetchone()
+            """,
+                (community_id, start_date, end_date),
+            )
+            water_amount = self.cursor_obj.fetchone()[0]
 
-            self.cursor_obj.execute("""
-                SELECT workers_quantity 
-                FROM plantings 
+            self.cursor_obj.execute(
+                """
+                SELECT AVG(workers_quantity)
+                FROM plantings
                 WHERE record_id = %s
-            """, (record_id,))
+            """,
+                (record_id,),
+            )
             workers_quantity = self.cursor_obj.fetchone()[0]
 
-            other_factors = round(random.uniform(0.1, 0.49), 2)
-            fertilizer_quantity = 12
+            avg_humidity = round(avg_humidity, 2)
+            avg_temp = round(avg_temp, 2)
+            water_amount = round(water_amount, 2)
+            
+            self.cursor_obj.execute(
+                """
+                SELECT p.name
+                FROM records r
+                JOIN products p ON r.product_id = p.id
+                WHERE r.id = %s
+            """,
+                (record_id,),
+            )
+            product_name = self.cursor_obj.fetchone()[0]
+            
 
-            self.cursor_obj.execute("""
-                INSERT INTO cultivations (record_id, start_date, end_date, avg_humidity, avg_temperature, fertilizer_quantity, water_amount, workers_quantity, other_factors)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (record_id, start_date, end_date, round(avg_humidity,2), round(avg_temp, 2), round(fertilizer_quantity, 2), round(water_amount,2), workers_quantity, other_factors))
+            other_factors = round(random.uniform(0.1, 0.49), 2)
+            for product in products_armenia:
+                if product[0] == product_name:
+                    min_count_fertilizer = product[12]
+                    max_count_fertilizer = product[13]
+                    fertilizer_quantity = round(
+                    random.randint(min_count_fertilizer, max_count_fertilizer))
+                    break
+            irrigation_hours = random.randint(18, 25)
+            fertilizing_hours = random.randint(18, 25)
+            soil_compaction_hours = random.randint(18, 25)
+
+            self.cursor_obj.execute(
+                """
+                INSERT INTO cultivations (record_id, start_date, end_date, avg_humidity, avg_temperature, fertilizer_quantity, water_amount, workers_quantity, other_factors, irrigation_hours, fertilizing_hours, soil_compaction_hours)
+                VALUES (%s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s, %s)
+            """,
+                (
+                    record_id,
+                    start_date,
+                    end_date,
+                    avg_humidity,
+                    avg_temp,
+                    fertilizer_quantity,
+                    water_amount,
+                    workers_quantity,
+                    other_factors,
+                    irrigation_hours,
+                    fertilizing_hours,
+                    soil_compaction_hours
+                ),
+            )
 
 
     def insert_weather_metrics(self):
-        self.cursor_obj.execute("""
+        self.cursor_obj.execute(
+            """
             SELECT p.date, r.community_id
             FROM plantings p
             INNER JOIN records r ON p.record_id = r.id
-        """)
+        """
+        )
         sowing_dates_and_communities = self.cursor_obj.fetchall()
-
-        self.cursor_obj.execute("""
+        self.cursor_obj.execute(
+            """
             SELECT date 
             FROM harvests
-        """)
+        """
+        )
         harvest_dates = self.cursor_obj.fetchall()
-
         for sowing_date, community_id in sowing_dates_and_communities:
             corresponding_harvest_date = None
-            for harvest_date, in harvest_dates:
+            for (harvest_date,) in harvest_dates:
                 if harvest_date > sowing_date:
                     corresponding_harvest_date = harvest_date
                     break
-
             if corresponding_harvest_date:
                 current_date = sowing_date
                 while current_date < corresponding_harvest_date:
                     month = current_date.month
                     current_season = self.get_season(month)
-
                     if current_season == "Summer":
                         precipitation_types = ["rain"]
                         temp_range = (10, 40)
@@ -350,19 +434,27 @@ class DataMocking:
                         precipitation_types = ["rain", "snow", "hail"]
                         temp_range = (-5, 30)
                         humidity_range = (40, 70)
-
                     humidity = random.randint(*humidity_range)
                     temperature = random.randint(*temp_range)
                     prec_type = random.choice(precipitation_types)
                     if prec_type == "rain":
                         rain_drop = random.randint(10, 100)
                     else:
-                        rain_drop = None
-
-                    self.cursor_obj.execute("""
+                        rain_drop = 0
+                    self.cursor_obj.execute(
+                        """
                         INSERT INTO weather_metrics (community_id, rain_drop, humidity, temperature, prec_type_id, date)
                         VALUES (%s, %s, %s, %s, (SELECT id FROM prec_types WHERE name = %s), %s)
-                    """, (community_id, rain_drop, humidity, temperature, prec_type, current_date))
+                    """,
+                        (
+                            community_id,
+                            rain_drop,
+                            humidity,
+                            temperature,
+                            prec_type,
+                            current_date,
+                        ),
+                    )
 
                     current_date += datetime.timedelta(days=1)
 
@@ -390,6 +482,78 @@ class DataMocking:
                 if insert_quantity > 0:
                     self.cursor_obj.execute("INSERT INTO cultivation_devices (cultivation_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",\
                                         (cultivation_id, portable_device_community_id, insert_quantity))
+
+
+    def insert_devices_calendars(self):
+        self.cursor_obj.execute("SELECT id, field_id FROM records")
+        records = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT record_id, start_date, end_date, id FROM cultivations")
+        cultivations = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT records_id, date, id FROM harvests")
+        harvests = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT records_id, date, id FROM plantings")
+        plantings = self.cursor_obj.fetchall()
+        for planting in plantings:
+            planting_record_id = planting[0]
+            planting_start_date = planting[1]
+            planting_id = planting[2]
+            for record in records:
+                record_id = record[0]
+                if record_id == planting_record_id:
+                    record_field_id = record[1]
+                    self.cursor_obj.execute(f"SELECT portable_devices_communities_id, quantity FROM planting_devices WHERE planting_id = {planting_id}")
+                    planting_devices = self.cursor_obj.fetchall()
+                    planning_end_date = cultivation_start_date + datetime.timedelta(days=random.randint(-2, 2))
+                    for planting_device in planting_devices:
+                        portable_device_community_id = planting_device[0]
+                        portable_device_quantity = planting_device[1]
+                        for cultivation in cultivations:
+                            cultivation_record_id = cultivation[0]
+                            if cultivation_record_id == record_id:
+                                cultivation_start_date = cultivation[1]
+                                self.cursor_obj.execute("INSERT INTO devices_calendars (start_date, end_date, actual_end_date, portable_devices_communities_id, field_id, quantity) VALUES (%s, %s, %s, %s, %s, %s)",\
+                                        (planting_start_date, planning_end_date, cultivation_start_date, portable_device_community_id, record_field_id, portable_device_quantity))
+                                break
+            
+        for cultivation in cultivations:
+            cultivation_record_id = cultivation[0]
+            cultivation_start_date = cultivation[1]
+            cultivation_end_date = cultivation[2]
+            cultivation_id = cultivation[3]
+            for record in records:
+                record_id = record[0]
+                if record_id == cultivation_record_id:
+                    record_field_id = record[1]
+                    self.cursor_obj.execute(f"SELECT portable_devices_communities_id, quantity FROM cultivation_devices WHERE cultivation_id = {cultivation_id}")
+                    cultivation_devices = self.cursor_obj.fetchall()
+                    planning_end_date = cultivation_start_date + datetime.timedelta(days=random.randint(-2, 2))
+                    for cultivation_device in cultivation_devices:
+                        portable_devices_communities_id = cultivation_device[0]
+                        portable_device_quantity = cultivation_device[1]
+                        self.cursor_obj.execute("INSERT INTO devices_calendars (start_date, end_date, actual_end_date, portable_devices_communities_id, field_id, quantity) VALUES (%s, %s, %s, %s, %s, %s)",\
+                            (cultivation_start_date, planning_end_date, cultivation_end_date, portable_devices_communities_id, record_field_id, portable_device_quantity))
+        
+        for harvest in harvests:
+            harvest_date = planting[1]
+            harvest_record_id = planting[0]
+            harvest_id = planting[2]
+            for record in records:
+                record_id = record[0]
+                if record_id == harvest_record_id:
+                    record_field_id = record[1]
+                    self.cursor_obj.execute(f"SELECT portable_devices_communities_id, quantity FROM harvest_devices WHERE harvest_id = {harvest_id}")
+                    harvest_devices = self.cursor_obj.fetchall()
+                    planning_end_date = cultivation_start_date + datetime.timedelta(days=random.randint(-2, 2))
+                    for harvest_device in harvest_devices:
+                        portable_device_communitie_id = harvest_device[0]
+                        portable_device_quantity = harvest_device[1]
+                        for cultivation in cultivations:
+                            cultivation_record_id = cultivation[0]
+                            if cultivation_record_id == record_id:
+                                cultivation_end_date = cultivation[2]
+                                self.cursor_obj.execute("INSERT INTO devices_calendars (start_date, end_date, actual_end_date, portable_devices_communities_id, field_id, quantity) VALUES (%s, %s, %s, %s, %s, %s)",\
+                                        (cultivation_end_date, planning_end_date, harvest_date, portable_device_communitie_id, record_field_id, portable_device_quantity))
+                                break
         con.commit()
         self.cursor_obj.close()
         con.close()
