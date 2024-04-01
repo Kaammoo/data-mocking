@@ -743,6 +743,75 @@ class DataMocking:
                         "INSERT INTO cultivation_devices (cultivation_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
                         (cultivation_id, portable_device_community_id, insert_quantity),
                     )
+
+
+    def insert_devices_calendars(self):
+        self.cursor_obj.execute("SELECT id, field_id FROM records")
+        records = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT record_id, start_date, end_date, id FROM cultivations")
+        cultivations = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT record_id, date, id FROM harvests")
+        harvests = self.cursor_obj.fetchall()
+        self.cursor_obj.execute("SELECT record_id, date, id FROM plantings")
+        plantings = self.cursor_obj.fetchall()
+        for planting in plantings:
+            planting_record_id = planting[0]
+            planting_start_date = planting[1]
+            planting_id = planting[2]
+            for record in records:
+                record_id = record[0]
+                if record_id == planting_record_id:
+                    record_field_id = record[1]
+                    self.cursor_obj.execute(f"SELECT portable_devices_communities_id, quantity FROM planting_devices WHERE planting_id = {planting_id}")
+                    planting_devices = self.cursor_obj.fetchall()
+                    for cultivation in cultivations:
+                            cultivation_record_id = cultivation[0]
+                            if cultivation_record_id == record_id:
+                                cultivation_start_date = cultivation[1]
+                                planning_end_date = cultivation_start_date + datetime.timedelta(days=random.randint(-2, 2))
+                                for planting_device in planting_devices:
+                                    portable_device_community_id = planting_device[0]
+                                    portable_device_quantity = planting_device[1]
+                                    self.cursor_obj.execute("INSERT INTO devices_calendars (start_date, end_date, actual_end_date, portable_devices_communities_id, field_id, quantity) VALUES (%s, %s, %s, %s, %s, %s)",\
+                                        (planting_start_date, planning_end_date, cultivation_start_date, portable_device_community_id, record_field_id, portable_device_quantity))
+        for cultivation in cultivations:
+            cultivation_record_id = cultivation[0]
+            cultivation_start_date = cultivation[1]
+            cultivation_end_date = cultivation[2]
+            cultivation_id = cultivation[3]
+            for record in records:
+                record_id = record[0]
+                if record_id == cultivation_record_id:
+                    record_field_id = record[1]
+                    self.cursor_obj.execute(f"SELECT portable_devices_communities_id, quantity FROM cultivation_devices WHERE cultivation_id = {cultivation_id}")
+                    cultivation_devices = self.cursor_obj.fetchall()
+                    planning_end_date = cultivation_end_date + datetime.timedelta(days=random.randint(-2, 2))
+                    for cultivation_device in cultivation_devices:
+                        portable_devices_communities_id = cultivation_device[0]
+                        portable_device_quantity = cultivation_device[1]
+                        self.cursor_obj.execute("INSERT INTO devices_calendars (start_date, end_date, actual_end_date, portable_devices_communities_id, field_id, quantity) VALUES (%s, %s, %s, %s, %s, %s)",\
+                                (cultivation_start_date, planning_end_date, cultivation_end_date, portable_devices_communities_id, record_field_id, portable_device_quantity))
+        
+        for harvest in harvests:
+            harvest_date = harvest[1]
+            harvest_record_id = harvest[0]
+            harvest_id = harvest[2]
+            for record in records:
+                record_id = record[0]
+                if record_id == harvest_record_id:
+                    record_field_id = record[1]
+                    self.cursor_obj.execute(f"SELECT portable_devices_communities_id, quantity FROM harvest_devices WHERE harvest_id = {harvest_id}")
+                    harvest_devices = self.cursor_obj.fetchall()
+                    for cultivation in cultivations:
+                            cultivation_record_id = cultivation[0]
+                            if cultivation_record_id == record_id:
+                                cultivation_end_date = cultivation[2]
+                                planning_end_date = harvest_date + datetime.timedelta(days=random.randint(-2, 2))
+                                for harvest_device in harvest_devices:
+                                    portable_device_communitie_id = harvest_device[0]
+                                    portable_device_quantity = harvest_device[1]
+                                    self.cursor_obj.execute("INSERT INTO devices_calendars (start_date, end_date, actual_end_date, portable_devices_communities_id, field_id, quantity) VALUES (%s, %s, %s, %s, %s, %s)",\
+                                            (cultivation_end_date, planning_end_date, harvest_date, portable_device_communitie_id, record_field_id, portable_device_quantity))
         con.commit()
         self.cursor_obj.close()
         con.close()
