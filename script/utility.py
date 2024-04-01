@@ -472,9 +472,8 @@ class DataMocking:
         )
         sowing_harvest_record_dates = self.cursor_obj.fetchall()
         for sowing_date, harvest_date, record_id in sowing_harvest_record_dates:
-            start_date = (sowing_date + datetime.timedelta(days=random.randint(1, 2))).strftime("%Y-%m-%d %H:%M:%S.%s %z")
-            end_date = (harvest_date - datetime.timedelta(days=random.randint(1, 2))).strftime("%Y-%m-%d %H:%M:%S.%s %z")
-
+            start_date = (sowing_date + datetime.timedelta(days=random.randint(1, 2))).strftime("%Y-%m-%d %H:%M:%S.%f %z")
+            end_date = (harvest_date - datetime.timedelta(days=random.randint(1, 2))).strftime("%Y-%m-%d %H:%M:%S.%f %z")
             self.cursor_obj.execute(
                 """
                 SELECT community_id 
@@ -681,12 +680,8 @@ class DataMocking:
                             product_yield = field_size * random.randint(
                                 min_yield, max_yield
                             )
-                            planting_date = planting_date.strftime(
-                                "%Y-%m-%d %H:%M:%S.%s %z"
-                            )
-                            harvest_date = harvest_date.strftime(
-                                "%Y-%m-%d %H:%M:%S.%s %z"
-                            )
+                            planting_date = planting_date.strftime("%Y-%m-%d %H:%M:%S.%f %z")
+                            harvest_date = harvest_date.strftime("%Y-%m-%d %H:%M:%S.%f %z")
                             self.cursor_obj.execute(
                                 "INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",
                                 (
