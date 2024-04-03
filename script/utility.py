@@ -282,19 +282,19 @@ class DataMocking:
                     current_season = self.get_season(month)
                     print(current_season)
                     if current_season == "Summer":
-                        precipitation_types = ["rain", None]
+                        precipitation_types = ["rain", "without_prec"]
                         temp_range = (10, 40)
                         humidity_range = (30, 80)
                     elif current_season == "Winter":
-                        precipitation_types = ["snow", "hail", None]
+                        precipitation_types = ["snow", "hail", "without_prec"]
                         temp_range = (-10, 5)
                         humidity_range = (20, 70)
                     elif current_season == "Spring" or month == 9 or month == 10:
-                        precipitation_types = ["rain", "hail", None]
+                        precipitation_types = ["rain", "hail", "without_prec"]
                         temp_range = (2, 25)
                         humidity_range = (20, 60)
                     else:
-                        precipitation_types = ["rain", "snow", "hail", None]
+                        precipitation_types = ["rain", "snow", "hail", "without_prec"]
                         temp_range = (-5, 30)
                         humidity_range = (40, 70)
                     humidity = random.randint(*humidity_range)
@@ -303,27 +303,12 @@ class DataMocking:
                     if prec_type == "rain":
                         rain_drop = random.randint(10, 100)
                     else:
-                        rain_drop = 0
+                        rain_drop = None
                     if prec_type is not None:
                         self.cursor_obj.execute(
                             """
                             INSERT INTO weather_metrics (community_id, rain_drop, humidity, temperature, prec_type_id, date)
                             VALUES (%s, %s, %s, %s, (SELECT id FROM prec_types WHERE name = %s), %s)
-                        """,
-                            (
-                                community_id,
-                                rain_drop,
-                                humidity,
-                                temperature,
-                                prec_type,
-                                current_date,
-                            ),
-                        )
-                    else:
-                        self.cursor_obj.execute(
-                            """
-                            INSERT INTO weather_metrics (community_id, rain_drop, humidity, temperature, prec_type_id, date)
-                            VALUES (%s, %s, %s, %s,  %s, %s)
                         """,
                             (
                                 community_id,
@@ -412,7 +397,7 @@ class DataMocking:
                     )
 
     def insert_precipitation_types(self):
-        precipitation_types = [("rain",), ("snow",), ("hail",)]
+        precipitation_types = [("rain",), ("snow",), ("hail",), ("without_prec",)]
 
         for prec_type in precipitation_types:
             self.cursor_obj.execute(
