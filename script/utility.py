@@ -283,23 +283,28 @@ class DataMocking:
                     print(current_season)
                     if current_season == "Summer":
                         precipitation_types = ["rain", "without_prec"]
+                        weights = [0.3, 0.7]  # Adjust the weights according to your preference
                         temp_range = (10, 40)
                         humidity_range = (30, 80)
                     elif current_season == "Winter":
                         precipitation_types = ["snow", "hail", "without_prec"]
+                        weights = [0.2, 0.1, 0.7]  # Adjust the weights according to your preference
                         temp_range = (-10, 5)
                         humidity_range = (20, 70)
                     elif current_season == "Spring" or month == 9 or month == 10:
                         precipitation_types = ["rain", "hail", "without_prec"]
+                        weights = [0.4, 0.1, 0.5]  # Adjust the weights according to your preference
                         temp_range = (2, 25)
                         humidity_range = (20, 60)
                     else:
                         precipitation_types = ["rain", "snow", "hail", "without_prec"]
+                        weights = [0.25, 0.25, 0.2, 0.3]  # Adjust the weights according to your preference
                         temp_range = (-5, 30)
                         humidity_range = (40, 70)
+
+                    prec_type = random.choices(precipitation_types, weights=weights)[0]
                     humidity = random.randint(*humidity_range)
                     temperature = random.randint(*temp_range)
-                    prec_type = random.choice(precipitation_types)
                     if prec_type == "rain":
                         rain_drop = random.randint(10, 100)
                     else:
@@ -445,10 +450,12 @@ class DataMocking:
                 )
 
     def insert_portable_devices(self):
-        for device_name in portable_device_data:
-            self.cursor_obj.execute(
-                "INSERT INTO portable_devices (name) VALUES (%s)", (device_name,)
-            )
+        for category, devices in portable_device_data.items():
+            for device_name in devices:
+                self.cursor_obj.execute(
+                    "INSERT INTO portable_devices (name) VALUES (%s)", (device_name,)
+                )
+
 
     def insert_cultivations(self):
         self.cursor_obj.execute(
