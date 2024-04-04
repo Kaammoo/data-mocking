@@ -16,35 +16,14 @@ class DataMocking:
 
     def insert_users(self):
         self.cursor_obj.execute("SELECT id FROM communities")
-        communities = self.cursor_obj.fetchall()[0]
-        users_per_community = random.randint(
-            min_users_per_community, max_users_per_community
-        )
-        unique_id = str(int(time()))
-        for community_id in range(1, 11):
-            for _ in range(users_per_community):
-                name = self.fake.name()
-                email = self.fake.email() + f"_{unique_id}"
-                code = random.choice(["94", "98", "93", "33", "91", "99", "55", "95"])
-                phone_number = "+374" + code + self.fake.numerify("#######")
-
-                self.cursor_obj.execute(
-                    "INSERT INTO users (name, email, phone_number) VALUES (%s, %s, %s) RETURNING id",
-                    (name, email, phone_number),
-                )
-        self.cursor_obj.execute("SELECT * FROM communities")
         communities = self.cursor_obj.fetchall()
-        self.cursor_obj.execute("SELECT * FROM users")
-        users = self.cursor_obj.fetchall()
-        for community in communities:
-            community_id = community[0]
-            for user in users:
-                user_id = user[0]
-
-                self.cursor_obj.execute(
-                    "INSERT INTO users_communities (user_id, community_id) VALUES (%s, %s)",
-                    (user_id, community_id),
-                )
+        users_per_community = random.randint(min_users_per_community, max_users_per_community)
+        for community_id in communities:
+            unique_id = str(int(time()))
+            for _ in range(users_per_community):
+                name, email, phone_number = generate_user_data(unique_id)
+                user_id = insert_user(name, email, phone_number)
+                associate_user_with_community(user_id, community_id)
 
     def insert_expenses(self):
         self.cursor_obj.execute(
@@ -70,14 +49,8 @@ class DataMocking:
 
                 category_id = random.randint(1, 4)
                 amount = random.randint(100, 1000)
+                insert_expense(record_id, category_id, amount, expense_date)
 
-                self.cursor_obj.execute(
-                    """
-                    INSERT INTO expenses (record_id, category_id, amount, date)
-                    VALUES (%s, %s, %s, %s)
-                """,
-                    (record_id, category_id, amount, expense_date),
-                )
 
     def insert_portable_devices_communities(self):
         # Fetching necessary data
@@ -104,13 +77,7 @@ class DataMocking:
                     if device_name in portable_device_name:
                         input_device_count = random.randint(*count_range)
                         break
-
-                # Insert into portable_devices_communities
-                self.cursor_obj.execute("""
-                    INSERT INTO portable_devices_communities (portable_device_id, community_id, quantity)
-                    VALUES (%s, %s, %s)
-                """, (portable_device_id, community_id, input_device_count))
-
+                portable_device_community(portable_device_id, community_id, input_device_count)
 
 
     def insert_planting_devices(self):
@@ -123,19 +90,10 @@ class DataMocking:
             for portable_device_community in portable_devices_communities:
                 portable_device_community_id = portable_device_community[0]
                 portable_device_community_quantity = portable_device_community[1]
-                if portable_device_community_quantity > 7:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 4
-                    )
-                else:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity
-                    )
+                insert_quantity = generate_insert_quantity(portable_device_community_quantity)
                 if insert_quantity > 0:
-                    self.cursor_obj.execute(
-                        "INSERT INTO planting_devices (planting_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
-                        (planting_id, portable_device_community_id, insert_quantity),
-                    )
+                    insert_planting_device(planting_id, portable_device_community_id, insert_quantity)
+
 
     def insert_harvest_devices(self):
         self.cursor_obj.execute("SELECT id FROM harvests")
@@ -147,20 +105,10 @@ class DataMocking:
             for portable_device_community in portable_devices_communities:
                 portable_device_community_id = portable_device_community[0]
                 portable_device_community_quantity = portable_device_community[1]
-                if portable_device_community_quantity > 7:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 4
-                    )
-                else:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity
-                    )
+                insert_quantity = generate_insert_quantity(portable_device_community_quantity)
                 if insert_quantity > 0:
+                    insert_harvest_device(harvest_id, portable_device_community_id, insert_quantity)
 
-                    self.cursor_obj.execute(
-                        "INSERT INTO harvest_devices (harvest_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
-                        (harvest_id, portable_device_community_id, insert_quantity),
-                    )
 
     def calculate_yields(self):
         self.cursor_obj.execute(
@@ -218,17 +166,9 @@ class DataMocking:
                     break
 
             change += other_factors
-
             new_yield = old_yield - old_yield * change / 100
+            update_new_yield(new_yield, record_id)
 
-            self.cursor_obj.execute(
-                """
-                UPDATE harvests
-                SET yield = %s
-                WHERE record_id = %s
-            """,
-                (new_yield, record_id),
-            )
 
     def insert_weather_metrics(self):
         self.cursor_obj.execute(
@@ -405,11 +345,7 @@ class DataMocking:
             for i in range(random.randint(min_field_count, max_field_count)):
                 field_name = f"{community[1]}_field{i + 1}"
                 field_size = random.randint(min_field_size, max_field_size)
-                self.cursor_obj.execute(
-                    "INSERT INTO fields (name, size, measurement_id) VALUES \
-                    (%s, %s, %s)",
-                    (field_name, field_size, 4),
-                )
+                insert_field(field_name, field_size, measurement_id=4)
 
         for community in communities:
             community_name = community[1] + "%"
@@ -419,18 +355,13 @@ class DataMocking:
             )
             fields = self.cursor_obj.fetchall()
             for field in fields:
-                self.cursor_obj.execute(
-                    "INSERT INTO fields_communities (field_id, community_id) VALUES\
-                    (%s, %s)",
-                    (field[0], community_id),
-                )
+                field_id = field[0]
+                insert_field_community(field_id, community_id)
 
     def insert_portable_devices(self):
-        for category, devices in portable_device_data.items():
+        for _, devices in portable_device_data.items():
             for device_name in devices:
-                self.cursor_obj.execute(
-                    "INSERT INTO portable_devices (name) VALUES (%s)", (device_name,)
-                )
+                insert_portable_device(device_name)
 
 
     def insert_cultivations(self):
@@ -516,72 +447,23 @@ class DataMocking:
             fertilizing_hours = random.randint(18, 25)
             soil_compaction_hours = random.randint(18, 25)
 
-            self.cursor_obj.execute(
-                """
-                INSERT INTO cultivations (record_id, start_date, end_date, avg_humidity, avg_temperature, fertilizer_quantity, water_amount, workers_quantity, other_factors, irrigation_hours, fertilizing_hours, soil_compaction_hours)
-                VALUES (%s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s, %s)
-            """,
-                (
-                    record_id,
-                    start_date,
-                    end_date,
-                    avg_humidity,
-                    avg_temp,
-                    fertilizer_quantity,
-                    water_amount,
-                    workers_quantity,
-                    other_factors,
-                    irrigation_hours,
-                    fertilizing_hours,
-                    soil_compaction_hours,
-                ),
-            )
+            insert_cultivation(record_id, start_date, end_date, avg_humidity, avg_temp, fertilizer_quantity, water_amount, workers_quantity, other_factors, irrigation_hours, fertilizing_hours, soil_compaction_hours)
 
-    def insert_plantings(self, duration):
-        # Fetching necessary data
-        self.cursor_obj.execute("""
-            SELECT r.id, r.product_id, r.field_id, f.size
-            FROM records r
-            JOIN fields f ON r.field_id = f.id
-        """)
-        records_data = self.cursor_obj.fetchall()
+    def insert_plantings(self):
+        self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
+        records = self.cursor_obj.fetchall()
 
-        used_records = {}
-
-        for record_id, product_id, field_id, field_size in records_data:
-            if field_id in used_records:
-                if len(used_records[field_id]) >= duration:
-                    continue
-                used_years = used_records[field_id]
-            else:
-                used_years = []
-            available_years = [year for year in range(1, duration + 1) if year not in used_years]
-            rand_year = random.choice(available_years)
-            used_records.setdefault(field_id, []).append(rand_year)
-
-            # Fetch product name and crop info
-            self.cursor_obj.execute("SELECT name FROM products WHERE id = %s", (product_id,))
-            product_name = self.cursor_obj.fetchone()[0]
-
-            crop_info = self.get_crops_and_months_by_product_name(products_armenia, product_name)
-
+        for record_id, product_id, field_id in records:
+            product_name = get_product_name_by_id(product_id)
+            crop_info = get_crops_and_months_by_product_name(products_armenia, product_name)
             if crop_info is None:
                 continue
-            
             min_crop_count, max_crop_count, min_month, max_month = crop_info
-            
-            # Generate random date within specified months
-            random_date_generated = random_date_within_months(min_month, max_month, rand_year)
-
-            # Calculate workers count and crop count
-            workers_count = min(max(field_size // 10 + random.randint(-3, 2), 0), 9)
-            crop_count = field_size * random.randint(min_crop_count, max_crop_count) / 1000
-
-            # Insert planting record
-            self.cursor_obj.execute("""
-                INSERT INTO plantings (record_id, crop_quantity, date, workers_quantity)
-                VALUES (%s, %s, %s, %s)
-            """, (record_id, crop_count, random_date_generated, workers_count))
+            random_date_generated = random_date_within_months(min_month, max_month, get_planting_year(record_id))
+            field_size = get_field_size_by_id(field_id)
+            workers_count = get_workers_count_by_field_id(field_id)
+            crop_count = (field_size * random.randint(min_crop_count, max_crop_count)) / 1000
+            insert_planting_record(record_id, crop_count, random_date_generated, workers_count)
 
     def insert_harvest(self):
         self.cursor_obj.execute("SELECT record_id, crop_quantity, date FROM plantings")
@@ -652,16 +534,7 @@ class DataMocking:
                             harvest_date = harvest_date.strftime(
                                 "%Y-%m-%d %H:%M:%S.%f %z"
                             )
-                            self.cursor_obj.execute(
-                                "INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",
-                                (
-                                    record_id,
-                                    product_yield,
-                                    harvest_date,
-                                    field_size,
-                                    workers_count,
-                                ),
-                            )
+                            insert_harvest(record_id, product_yield, harvest_date, field_size, workers_count,)
 
 
     def insert_cultivation_devices(self):
@@ -675,10 +548,7 @@ class DataMocking:
             for portable_device_community_id, portable_device_community_quantity in portable_devices_communities:
                 insert_quantity = calculate_insert_quantity(portable_device_community_quantity)
                 if insert_quantity > 0:
-                    self.cursor_obj.execute(
-                        "INSERT INTO cultivation_devices (cultivation_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
-                        (cultivation_id, portable_device_community_id, insert_quantity),
-                    )
+                    insert_cultivation_device(cultivation_id, portable_device_community_id, insert_quantity)
 
     def insert_devices_calendars(self):
         self.cursor_obj.execute("SELECT id, field_id FROM records")
@@ -699,10 +569,7 @@ class DataMocking:
                 record_id = record[0]
                 if record_id == planting_record_id:
                     record_field_id = record[1]
-                    self.cursor_obj.execute(
-                        f"SELECT portable_devices_communities_id, quantity FROM planting_devices WHERE planting_id = {planting_id}"
-                    )
-                    planting_devices = self.cursor_obj.fetchall()
+                    planting_devices = get_planting_devices(planting_id)
                     for cultivation in cultivations:
                         cultivation_record_id = cultivation[0]
                         if cultivation_record_id == record_id:
@@ -714,17 +581,10 @@ class DataMocking:
                             for planting_device in planting_devices:
                                 portable_device_community_id = planting_device[0]
                                 portable_device_quantity = planting_device[1]
-                                self.cursor_obj.execute(
-                                    "INSERT INTO devices_calendars (start_date, end_date, actual_end_date, portable_devices_communities_id, field_id, quantity) VALUES (%s, %s, %s, %s, %s, %s)",
-                                    (
-                                        planting_start_date,
-                                        planning_end_date,
-                                        cultivation_start_date,
-                                        portable_device_community_id,
-                                        record_field_id,
-                                        portable_device_quantity,
-                                    ),
-                                )
+                                insert_devices_calendar_record(
+                                planting_start_date, planning_end_date,
+                                cultivation_start_date, portable_device_community_id,
+                                record_field_id, portable_device_quantity)
         for cultivation in cultivations:
             cultivation_record_id = cultivation[0]
             cultivation_start_date = cultivation[1]
@@ -734,28 +594,17 @@ class DataMocking:
                 record_id = record[0]
                 if record_id == cultivation_record_id:
                     record_field_id = record[1]
-                    self.cursor_obj.execute(
-                        f"SELECT portable_devices_communities_id, quantity FROM cultivation_devices WHERE cultivation_id = {cultivation_id}"
-                    )
-                    cultivation_devices = self.cursor_obj.fetchall()
+                    cultivation_devices = get_cultivation_devices(cultivation_id)
                     planning_end_date = cultivation_end_date + datetime.timedelta(
                         days=random.randint(-2, 2)
                     )
                     for cultivation_device in cultivation_devices:
                         portable_devices_communities_id = cultivation_device[0]
                         portable_device_quantity = cultivation_device[1]
-                        self.cursor_obj.execute(
-                            "INSERT INTO devices_calendars (start_date, end_date, actual_end_date, portable_devices_communities_id, field_id, quantity) VALUES (%s, %s, %s, %s, %s, %s)",
-                            (
-                                cultivation_start_date,
-                                planning_end_date,
-                                cultivation_end_date,
-                                portable_devices_communities_id,
-                                record_field_id,
-                                portable_device_quantity,
-                            ),
-                        )
-
+                        insert_devices_calendar_record(
+                                cultivation_start_date, planning_end_date,
+                                cultivation_end_date, portable_devices_communities_id,
+                                record_field_id, portable_device_quantity,)
         for harvest in harvests:
             harvest_date = harvest[1]
             harvest_record_id = harvest[0]
@@ -764,10 +613,7 @@ class DataMocking:
                 record_id = record[0]
                 if record_id == harvest_record_id:
                     record_field_id = record[1]
-                    self.cursor_obj.execute(
-                        f"SELECT portable_devices_communities_id, quantity FROM harvest_devices WHERE harvest_id = {harvest_id}"
-                    )
-                    harvest_devices = self.cursor_obj.fetchall()
+                    harvest_devices = get_harvest_devices(harvest_id)
                     for cultivation in cultivations:
                         cultivation_record_id = cultivation[0]
                         if cultivation_record_id == record_id:
@@ -778,17 +624,11 @@ class DataMocking:
                             for harvest_device in harvest_devices:
                                 portable_device_communitie_id = harvest_device[0]
                                 portable_device_quantity = harvest_device[1]
-                                self.cursor_obj.execute(
-                                    "INSERT INTO devices_calendars (start_date, end_date, actual_end_date, portable_devices_communities_id, field_id, quantity) VALUES (%s, %s, %s, %s, %s, %s)",
-                                    (
-                                        cultivation_end_date,
-                                        planning_end_date,
-                                        harvest_date,
-                                        portable_device_communitie_id,
-                                        record_field_id,
-                                        portable_device_quantity,
-                                    ),
-                                )
+                                insert_devices_calendar_record(
+                                    cultivation_end_date, planning_end_date,
+                                    harvest_date, portable_device_communitie_id,
+                                    record_field_id, portable_device_quantity,)
+
         con.commit()
         self.cursor_obj.close()
         con.close()
