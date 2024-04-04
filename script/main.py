@@ -1,4 +1,4 @@
-from utility import DataMocking
+from DataMocking import DataMocking
 
 def run():
     project = DataMocking()

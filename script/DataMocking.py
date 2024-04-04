@@ -2,6 +2,8 @@ import random
 from faker import Faker
 from db import con
 from consts import *
+from configs import *
+from utilities import *
 import datetime
 from time import time
 
@@ -11,36 +13,6 @@ class DataMocking:
         self.cursor_obj = con.cursor()
         self.fake = Faker()
 
-    def get_season(self, month):
-        if month in range(3, 6):
-            return "Spring"
-        elif month in range(6, 9):
-            return "Summer"
-        elif month in range(9, 12):
-            return "Autumn"
-        else:
-            return "Winter"
-
-    def get_crops_and_months_by_product_name(self, products, product_name):
-        for product in products:
-            if product[0] == product_name:
-                return product[2], product[3], product[4], product[5]
-        return None
-
-    def random_date_within_months(self, min_month, max_month, year):
-        date_year = datetime.datetime.now().year - year
-
-        month = random.randint(min_month, max_month)
-        day = random.randint(1, 28)
-        return datetime.datetime(date_year, month, day)
-
-    def get_growth_duration_and_min_max_yield_by_product_name(
-        self, products, product_name
-    ):
-        for product in products:
-            if product[0] == product_name:
-                return product[6], product[7], product[10], product[11]
-        return None
 
     def insert_users(self):
         self.cursor_obj.execute("SELECT id FROM communities")
@@ -108,32 +80,38 @@ class DataMocking:
                 )
 
     def insert_portable_devices_communities(self):
+        # Fetching necessary data
         self.cursor_obj.execute("SELECT id FROM communities")
         communities = self.cursor_obj.fetchall()
+
         self.cursor_obj.execute("SELECT id, name FROM portable_devices")
         portable_devices = self.cursor_obj.fetchall()
-        for community in communities:
-            community_id = community[0]
-            for portable_device in portable_devices:
-                portable_device_id = portable_device[0]
-                portable_device_name = portable_device[1]
-                if (
-                    "Shovel" == portable_device_name
-                    or "Rake" == portable_device_name
-                    or portable_device_name == "Spade"
-                    or portable_device_name == "Hoe"
-                ):
-                    input_device_count = random.randint(100, 200)
-                elif "Tractor" in portable_device_name:
-                    input_device_count = random.randint(10, 20)
-                elif "Combine" in portable_device_name:
-                    input_device_count = random.randint(10, 20)
-                else:
-                    input_device_count = random.randint(1, 9)
-                self.cursor_obj.execute(
-                    "INSERT INTO portable_devices_communities (portable_device_id, community_id, quantity) VALUES (%s, %s, %s)",
-                    (portable_device_id, community_id, input_device_count),
-                )
+
+        # Define input device counts based on device names
+        device_counts = {
+            "Shovel": (100, 200),
+            "Rake": (100, 200),
+            "Spade": (100, 200),
+            "Hoe": (100, 200),
+            "Tractor": (10, 20),
+            "Combine": (10, 20)
+        }
+
+        for community_id, in communities:
+            for portable_device_id, portable_device_name in portable_devices:
+                input_device_count = random.randint(1, 9)
+                for device_name, count_range in device_counts.items():
+                    if device_name in portable_device_name:
+                        input_device_count = random.randint(*count_range)
+                        break
+
+                # Insert into portable_devices_communities
+                self.cursor_obj.execute("""
+                    INSERT INTO portable_devices_communities (portable_device_id, community_id, quantity)
+                    VALUES (%s, %s, %s)
+                """, (portable_device_id, community_id, input_device_count))
+
+
 
     def insert_planting_devices(self):
         self.cursor_obj.execute("SELECT id FROM plantings")
@@ -278,7 +256,7 @@ class DataMocking:
                 current_date = sowing_date
                 while current_date < corresponding_harvest_date:
                     month = current_date.month
-                    current_season = self.get_season(month)
+                    current_season = get_season(month)
                     if current_season == "Summer":
                         precipitation_types = ["rain", "without_prec"]
                         weights = [0.3, 0.7]  # Adjust the weights according to your preference
@@ -559,61 +537,51 @@ class DataMocking:
                 ),
             )
 
-    def insert_plantings(self):
-        self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
-        records = self.cursor_obj.fetchall()
+    def insert_plantings(self, duration):
+        # Fetching necessary data
+        self.cursor_obj.execute("""
+            SELECT r.id, r.product_id, r.field_id, f.size
+            FROM records r
+            JOIN fields f ON r.field_id = f.id
+        """)
+        records_data = self.cursor_obj.fetchall()
+
         used_records = {}
-        years_duration = tuple((i for i in range(1, duration + 1)))
-        for record in records:
-            field_id = record[2]
-            if field_id in used_records.keys():
+
+        for record_id, product_id, field_id, field_size in records_data:
+            if field_id in used_records:
                 if len(used_records[field_id]) >= duration:
                     continue
-                elif len(used_records[field_id]) == 1:
-                    years_range = tuple(
-                        x for x in years_duration if x != used_records[field_id][0]
-                    )
-                    rand_year = random.choice(years_range)
-                    used_records[field_id].append(rand_year)
-                else:
-                    years_range = tuple(
-                        item
-                        for item in years_duration
-                        if item not in used_records[field_id]
-                    )
-                    rand_year = random.choice(years_range)
-                    used_records[field_id].append(rand_year)
+                used_years = used_records[field_id]
             else:
-                rand_year = random.choice(years_duration)
-                used_records[field_id] = [rand_year]
-            self.cursor_obj.execute(f"SELECT name FROM products WHERE id = {record[1]}")
+                used_years = []
+            available_years = [year for year in range(1, duration + 1) if year not in used_years]
+            rand_year = random.choice(available_years)
+            used_records.setdefault(field_id, []).append(rand_year)
+
+            # Fetch product name and crop info
+            self.cursor_obj.execute("SELECT name FROM products WHERE id = %s", (product_id,))
             product_name = self.cursor_obj.fetchone()[0]
 
-            crop_info = self.get_crops_and_months_by_product_name(
-                products_armenia, product_name
-            )
+            crop_info = self.get_crops_and_months_by_product_name(products_armenia, product_name)
 
             if crop_info is None:
                 continue
+            
             min_crop_count, max_crop_count, min_month, max_month = crop_info
-            random_date_generated = self.random_date_within_months(
-                min_month, max_month, rand_year
-            )
-            record_id = record[0]
-            self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
-            field_size = self.cursor_obj.fetchone()[0]
-            workers_count = field_size // 10
-            if workers_count > 9:
-                workers_count -= random.randint(0, 3)
-            else:
-                workers_count += random.randint(0, 2)
-            crop_count = (
-                field_size * random.randint(min_crop_count, max_crop_count)
-            ) / 1000
-            self.cursor_obj.execute(
-                "INSERT INTO plantings (record_id, crop_quantity, date, workers_quantity) VALUES (%s, %s, %s, %s)",
-                (record_id, crop_count, random_date_generated, workers_count),
-            )
+            
+            # Generate random date within specified months
+            random_date_generated = random_date_within_months(min_month, max_month, rand_year)
+
+            # Calculate workers count and crop count
+            workers_count = min(max(field_size // 10 + random.randint(-3, 2), 0), 9)
+            crop_count = field_size * random.randint(min_crop_count, max_crop_count) / 1000
+
+            # Insert planting record
+            self.cursor_obj.execute("""
+                INSERT INTO plantings (record_id, crop_quantity, date, workers_quantity)
+                VALUES (%s, %s, %s, %s)
+            """, (record_id, crop_count, random_date_generated, workers_count))
 
     def insert_harvest(self):
         self.cursor_obj.execute("SELECT record_id, crop_quantity, date FROM plantings")
@@ -638,7 +606,7 @@ class DataMocking:
                                 max_growth_duration,
                                 min_yield,
                                 max_yield,
-                            ) = self.get_growth_duration_and_min_max_yield_by_product_name(
+                            ) = get_growth_duration_and_min_max_yield_by_product_name(
                                 products_armenia, product_name
                             )
                             rand_day = random.randint(
@@ -695,44 +663,17 @@ class DataMocking:
                                 ),
                             )
 
-    def get_growth_duration_and_min_max_yield_by_product_name(
-        self, products, product_name
-    ):
-        for product in products:
-            if product[0] == product_name:
-                return product[6], product[7], product[10], product[11]
-        return None
 
     def insert_cultivation_devices(self):
+        # Fetch all cultivations and portable devices communities
         self.cursor_obj.execute("SELECT id FROM cultivations")
         cultivations = self.cursor_obj.fetchall()
         self.cursor_obj.execute("SELECT id, quantity FROM portable_devices_communities")
         portable_devices_communities = self.cursor_obj.fetchall()
-        for cultivation in cultivations:
-            cultivation_id = cultivation[0]
-            for portable_device_community in portable_devices_communities:
-                portable_device_community_id = portable_device_community[0]
-                portable_device_community_quantity = portable_device_community[1]
-                if 8 > portable_device_community_quantity > 3:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 3
-                    )
-                elif 12 > portable_device_community_quantity > 7:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 4
-                    )
-                elif 25 > portable_device_community_quantity > 11:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 6
-                    )
-                elif portable_device_community_quantity > 24:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 10
-                    )
-                else:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity
-                    )
+
+        for cultivation_id, in cultivations:
+            for portable_device_community_id, portable_device_community_quantity in portable_devices_communities:
+                insert_quantity = calculate_insert_quantity(portable_device_community_quantity)
                 if insert_quantity > 0:
                     self.cursor_obj.execute(
                         "INSERT INTO cultivation_devices (cultivation_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
