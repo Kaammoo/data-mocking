@@ -293,12 +293,12 @@ class DataMocking:
                         humidity_range = (20, 70)
                     elif current_season == "Spring" or month == 9 or month == 10:
                         precipitation_types = ["rain", "hail", "without_prec"]
-                        weights = [0.4, 0.1, 0.5]  # Adjust the weights according to your preference
+                        weights = [0.4, 0.01, 0.59]  # Adjust the weights according to your preference
                         temp_range = (2, 25)
                         humidity_range = (20, 60)
                     else:
                         precipitation_types = ["rain", "snow", "hail", "without_prec"]
-                        weights = [0.25, 0.25, 0.2, 0.3]  # Adjust the weights according to your preference
+                        weights = [0.20, 0.30, 0.1, 0.4]  # Adjust the weights according to your preference
                         temp_range = (-5, 30)
                         humidity_range = (40, 70)
 
