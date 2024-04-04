@@ -278,9 +278,7 @@ class DataMocking:
                 current_date = sowing_date
                 while current_date < corresponding_harvest_date:
                     month = current_date.month
-                    print(current_date.month)
                     current_season = self.get_season(month)
-                    print(current_season)
                     if current_season == "Summer":
                         precipitation_types = ["rain", "without_prec"]
                         weights = [0.3, 0.7]  # Adjust the weights according to your preference
@@ -511,7 +509,10 @@ class DataMocking:
 
             avg_humidity = round(avg_humidity, 2)
             avg_temp = round(avg_temp, 2)
-            water_amount = round(water_amount, 2)
+            if(water_amount is not None):
+                water_amount = round(water_amount, 2)
+            else:
+                water_amount = 0
 
             self.cursor_obj.execute(
                 """
