@@ -27,7 +27,13 @@ portable_device_data = (
     "Combine Don-1500B", "Combine Yenisei-1200N", "Combine PALESSE GS4118",
     "Combine Niva SK-5M", "Combine Don-1500E", "Combine PALESSE GS4118K",)}
 )
-
+# products_armenia[0] -> Product Name
+# products_armenia[1] -> Product Description
+# products_armenia[2] -> Product Min Sown count (grams) for  hectar
+# products_armenia[3] -> Product Max Sown count (grams) for  hectar
+# products_armenia[4] -> Month on which  this product is sown
+# products_armenia[5] -> From which to Month on which  this product is sown
+# products_armenia[6] -> Product Name
 products_armenia = (
     ("Russet Potato", "Versatile and delicious vegetable.", 1500, 1800, 5, 5, 85, 95, 8, 25, 15000, 40000, 50, 100),
     ("Sweet Potato", "Versatile and delicious vegetable.", 1500, 1800, 5, 5, 85, 95, 8, 25, 10000, 30000, 50, 100),

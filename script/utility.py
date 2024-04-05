@@ -89,6 +89,7 @@ class DataMocking:
             period = (harvest_date - sowing_date).days
 
             if period <= 0:
+                print("if")
                 continue
 
             for _ in range(5):
@@ -98,7 +99,11 @@ class DataMocking:
 
                 category_id = random.randint(1, 4)
                 amount = random.randint(100, 1000)
-
+                print("\n\n\n")
+                print(f"{expense_date =}")
+                print(f"{category_id =}")
+                print(f"{amount =}")
+                print("\n\n\n")
                 self.cursor_obj.execute(
                     """
                     INSERT INTO expenses (record_id, category_id, amount, date)
@@ -106,6 +111,9 @@ class DataMocking:
                 """,
                     (record_id, category_id, amount, expense_date),
                 )
+        # con.commit()
+        # self.cursor_obj.close()
+        # con.close()
 
     def insert_portable_devices_communities(self):
         self.cursor_obj.execute("SELECT id FROM communities")
@@ -281,22 +289,38 @@ class DataMocking:
                     current_season = self.get_season(month)
                     if current_season == "Summer":
                         precipitation_types = ["rain", "without_prec"]
-                        weights = [0.3, 0.7]  # Adjust the weights according to your preference
+                        weights = [
+                            0.3,
+                            0.7,
+                        ]  # Adjust the weights according to your preference
                         temp_range = (15, 30)
                         humidity_range = (30, 80)
                     elif current_season == "Winter":
                         precipitation_types = ["snow", "hail", "without_prec"]
-                        weights = [0.2, 0.1, 0.7]  # Adjust the weights according to your preference
+                        weights = [
+                            0.2,
+                            0.1,
+                            0.7,
+                        ]  # Adjust the weights according to your preference
                         temp_range = (-10, 5)
                         humidity_range = (20, 70)
                     elif current_season == "Spring" or month == 9 or month == 10:
                         precipitation_types = ["rain", "hail", "without_prec"]
-                        weights = [0.4, 0.01, 0.59]  # Adjust the weights according to your preference
+                        weights = [
+                            0.4,
+                            0.01,
+                            0.59,
+                        ]  # Adjust the weights according to your preference
                         temp_range = (10, 20)
                         humidity_range = (20, 60)
                     else:
                         precipitation_types = ["rain", "snow", "hail", "without_prec"]
-                        weights = [0.20, 0.30, 0.1, 0.4]  # Adjust the weights according to your preference
+                        weights = [
+                            0.20,
+                            0.30,
+                            0.1,
+                            0.4,
+                        ]  # Adjust the weights according to your preference
                         temp_range = (0, 15)
                         humidity_range = (40, 70)
 
@@ -454,7 +478,6 @@ class DataMocking:
                     "INSERT INTO portable_devices (name) VALUES (%s)", (device_name,)
                 )
 
-
     def insert_cultivations(self):
         self.cursor_obj.execute(
             """
@@ -509,7 +532,7 @@ class DataMocking:
 
             avg_humidity = round(avg_humidity, 2)
             avg_temp = round(avg_temp, 2)
-            if(water_amount is not None):
+            if water_amount is not None:
                 water_amount = round(water_amount, 2)
             else:
                 water_amount = 0
@@ -851,3 +874,243 @@ class DataMocking:
         con.commit()
         self.cursor_obj.close()
         con.close()
+    def insert_table(self, table_name):
+        if table_name == "1":
+            self.insert_users()
+            print("Users table inserted successfully")
+        elif table_name == "2":
+            self.insert_measurement_units()
+            print("Measurement units table inserted successfully")
+        elif table_name == "3":
+            self.fields()
+            print("Fields table inserted successfully")
+        elif table_name == "4":
+            self.insert_precipitation_types()
+            print("Precipitation types table inserted successfully")
+        elif table_name == "5":
+            self.insert_product_types()
+            print("Product types table inserted successfully")
+        elif table_name == "6":
+            self.insert_products()
+            print("Products table inserted successfully")
+        elif table_name == "7":
+            self.insert_records()
+            print("Records table inserted successfully")
+        elif table_name == "8":
+            self.insert_expense_categories()
+            print("Expense categories table inserted successfully")
+        elif table_name == "9":
+            self.insert_portable_devices()
+            print("Portable devices table inserted successfully")
+        elif table_name == "10":
+            self.insert_portable_devices_communities()
+            print("Portable devices communities table inserted successfully")
+        elif table_name == "11":
+            self.insert_plantings()
+            print("Plantings table inserted successfully")
+        elif table_name == "12":
+            self.insert_harvest()
+            print("Harvest table inserted successfully")
+        elif table_name == "13":
+            self.insert_planting_devices()
+            print("Planting devices table inserted successfully")
+        elif table_name == "14":
+            self.insert_harvest_devices()
+            print("Harvest devices table inserted successfully")
+        elif table_name == "15":
+            self.insert_expenses()
+            print("Expenses table inserted successfully")
+        elif table_name == "16":
+            self.insert_revenues()
+            print("Revenues table inserted successfully")
+        elif table_name == "17":
+            self.insert_weather_metrics()
+            print("Weather metrics table inserted successfully")
+        elif table_name == "18":
+            self.insert_cultivations()
+            print("Cultivations table inserted successfully")
+        elif table_name == "19":
+            self.calculate_yields()
+            print("Yields calculated successfully")
+        elif table_name == "20":
+            self.insert_cultivation_devices()
+            print("Cultivation devices table inserted successfully")
+        elif table_name == "21":
+            self.insert_devices_calendars()
+            print("Devices calendars table inserted successfully")
+        else:
+            print(f"Table number {table_name} is not recognized.")
+    def tables(self):
+        print("1: Users")
+        print("2: Measurement units")
+        print("3: Fields")
+        print("4: Precipitation types")
+        print("5: Product types")
+        print("6: Products")
+        print("7: Records")
+        print("8: Expense categories")
+        print("9: Portable devices")
+        print("10: Portable devices communities")
+        print("11: Plantings")
+        print("12: Harvest")
+        print("13: Planting devices")
+        print("14: Harvest devices")
+        print("15: Expenses")
+        print("16: Revenues")
+        print("17: Weather metrics")
+        print("18: Cultivations")
+        print("19: Calculate yields")
+        print("20: Cultivation devices")
+        print("21: Devices calendars")
+
+    def run(self):
+        change = input("Do you need to change anything? (y/yes or n/no): ")
+
+        if change.lower() in ["n", "no"]:
+            yes = input(
+                "If you need to run all tables with fixed data, press 'y'. If not, press 'n': "
+            )
+
+            if yes.lower() == "n":
+                table_count = int(input("How many tables do you need to insert: "))
+                if table_count > 1:
+                    print("Please specify the tables to insert: Press table numbers which you woth to insert splite its with space:")
+                    self.tables()
+                    table_names = input(
+                        "Enter table numbers separated by space: "
+                    ).split()
+                    if table_count == table_names.__len__():
+                        for table_name in table_names:
+                            self.insert_table(table_name)
+                    else:
+                        print("Tble names much more than table count")
+            elif yes.lower() == "y":
+                self.insert_users()
+                print("Users table inserted successfully")
+
+                self.insert_measurement_units()
+                print("Measurement units table inserted successfully")
+
+                self.fields()
+                print("Fields table inserted successfully")
+
+                self.insert_precipitation_types()
+                print("Precipitation types table inserted successfully")
+
+                self.insert_product_types()
+                print("Product types table inserted successfully")
+
+                self.insert_products()
+                print("Products table inserted successfully")
+
+                self.insert_records()
+                print("Records table inserted successfully")
+
+                self.insert_expense_categories()
+                print("Expense categories table inserted successfully")
+
+                self.insert_portable_devices()
+                print("Portable devices table inserted successfully")
+
+                self.insert_portable_devices_communities()
+                print("Portable devices communities table inserted successfully")
+
+                self.insert_plantings()
+                print("Plantings table inserted successfully")
+
+                self.insert_harvest()
+                print("Harvest table inserted successfully")
+
+                self.insert_planting_devices()
+                print("Planting devices table inserted successfully")
+
+                self.insert_harvest_devices()
+                print("Harvest devices table inserted successfully")
+
+                self.insert_expenses()
+                print("Expenses table inserted successfully")
+
+                self.insert_revenues()
+                print("Revenues table inserted successfully")
+
+                self.insert_weather_metrics()
+                print("Weather metrics table inserted successfully")
+
+                self.insert_cultivations()
+                print("Cultivations table inserted successfully")
+
+                self.calculate_yields()
+                print("Yields calculated successfully")
+
+                self.insert_cultivation_devices()
+                print("Cultivation devices table inserted successfully")
+
+                self.insert_devices_calendars()
+                print("Devices calendars table inserted successfully")()
+
+        elif change.lower() in ["y", "yes"]:
+            change_data = input("what do you need to change")
+            self.insert_users()
+            print("Users table inserted successfully")
+
+            self.insert_measurement_units()
+            print("Measurement units table inserted successfully")
+
+            self.fields()
+            print("Fields table inserted successfully")
+
+            self.insert_precipitation_types()
+            print("Precipitation types table inserted successfully")
+
+            self.insert_product_types()
+            print("Product types table inserted successfully")
+
+            self.insert_products()
+            print("Products table inserted successfully")
+
+            self.insert_records()
+            print("Records table inserted successfully")
+
+            self.insert_expense_categories()
+            print("Expense categories table inserted successfully")
+
+            self.insert_portable_devices()
+            print("Portable devices table inserted successfully")
+
+            self.insert_portable_devices_communities()
+            print("Portable devices communities table inserted successfully")
+
+            self.insert_plantings()
+            print("Plantings table inserted successfully")
+
+            self.insert_harvest()
+            print("Harvest table inserted successfully")
+
+            self.insert_planting_devices()
+            print("Planting devices table inserted successfully")
+
+            self.insert_harvest_devices()
+            print("Harvest devices table inserted successfully")
+
+            self.insert_expenses()
+            print("Expenses table inserted successfully")
+
+            self.insert_revenues()
+            print("Revenues table inserted successfully")
+
+            self.insert_weather_metrics()
+            print("Weather metrics table inserted successfully")
+
+            self.insert_cultivations()
+            print("Cultivations table inserted successfully")
+
+            self.calculate_yields()
+            print("Yields calculated successfully")
+
+            self.insert_cultivation_devices()
+            print("Cultivation devices table inserted successfully")
+
+            self.insert_devices_calendars()
+            print("Devices calendars table inserted successfully")()
+        else:
+            print("Invalid input. Please enter 'y/yes' or 'n/no'.")
