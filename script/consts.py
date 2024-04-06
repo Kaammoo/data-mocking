@@ -17,6 +17,7 @@ community_weights = {
             "Pambak": 0.6,
             "Odzun": 0.7
         }
+
 portable_device_data = (
     {"truck":("BelAZ 75710", "KAMAZ-65225", "MAZ-6501", "KrAZ-7140H6", "URAL-5557",
     "BelAZ 75302", "KAMAZ-65228", "MAZ-6516", "KrAZ-65101", "URAL-4320",

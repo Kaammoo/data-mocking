@@ -453,7 +453,7 @@ class DataMocking:
                 "INSERT INTO expense_categories (name) VALUES (%s)", category
             )
 
-    def fields(self):
+    def fields(self, min_field_count = min_field_count, max_field_count = max_field_count):
         self.cursor_obj.execute("SELECT * FROM communities")
         communities = self.cursor_obj.fetchall()
 
@@ -482,7 +482,7 @@ class DataMocking:
                 )
 
     def insert_portable_devices(self):
-        for category, devices in portable_device_data.items():
+        for _, devices in portable_device_data.items():
             for device_name in devices:
                 self.cursor_obj.execute(
                     "INSERT INTO portable_devices (name) VALUES (%s)", (device_name,)
@@ -592,15 +592,15 @@ class DataMocking:
                 ),
             )
 
-    def insert_plantings(self):
+    def insert_plantings(self, info_duration=duration):
         self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
         records = self.cursor_obj.fetchall()
         used_records = {}
-        years_duration = tuple((i for i in range(1, duration + 1)))
+        years_duration = tuple((i for i in range(1, info_duration + 1)))
         for record in records:
             field_id = record[2]
             if field_id in used_records.keys():
-                if len(used_records[field_id]) >= duration:
+                if len(used_records[field_id]) >= info_duration:
                     continue
                 elif len(used_records[field_id]) == 1:
                     years_range = tuple(
