@@ -42,37 +42,49 @@ class DataMocking:
                 return product[6], product[7], product[10], product[11]
         return None
 
-    def insert_users(self):
-        self.cursor_obj.execute("SELECT id FROM communities")
-        communities = self.cursor_obj.fetchall()[0]
-        users_per_community = random.randint(
-            min_users_per_community, max_users_per_community
-        )
-        unique_id = str(int(time()))
-        for community_id in range(1, 11):
-            for _ in range(users_per_community):
+    def insert_users(self, min_users_per_communitys=min_users_per_community):
+        # Fetch community names from the database
+        self.cursor_obj.execute("SELECT name FROM communities")
+        community_names = [entry[0] for entry in self.cursor_obj.fetchall()]
+
+        unique_id = str(random.randint(1, 500))
+
+        users_data = []
+
+        # Insert users into the users table
+        for community_name in community_names:
+            weight = community_weights.get(community_name, 0.5)  # Default weight is 0.5 if not found
+            adjusted_users = round(((max_users_per_community - min_users_per_communitys) * weight) + min_users_per_communitys)
+
+            for _ in range(adjusted_users):
                 name = self.fake.name()
                 email = self.fake.email() + f"_{unique_id}"
                 code = random.choice(["94", "98", "93", "33", "91", "99", "55", "95"])
                 phone_number = "+374" + code + self.fake.numerify("#######")
 
-                self.cursor_obj.execute(
-                    "INSERT INTO users (name, email, phone_number) VALUES (%s, %s, %s) RETURNING id",
-                    (name, email, phone_number),
-                )
-        self.cursor_obj.execute("SELECT * FROM communities")
-        communities = self.cursor_obj.fetchall()
-        self.cursor_obj.execute("SELECT * FROM users")
-        users = self.cursor_obj.fetchall()
-        for community in communities:
-            community_id = community[0]
-            for user in users:
-                user_id = user[0]
+                users_data.append((name, email, phone_number))
 
+        # Insert all users into the users table
+        self.cursor_obj.executemany(
+            "INSERT INTO users (name, email, phone_number) VALUES (%s, %s, %s) RETURNING id",
+            users_data
+        )
+
+        # Fetch all user IDs after inserting them
+        self.cursor_obj.execute("SELECT id FROM users")
+        user_ids = self.cursor_obj.fetchall()
+
+        # Establish relationships between users and communities in the users_communities table
+        for community_name in community_names:
+            community_id = community_names.index(community_name) + 1
+            community_user_ids = random.sample(user_ids, k=round(len(user_ids) * community_weights.get(community_name, 0.5)))
+            for user_id, in community_user_ids:
                 self.cursor_obj.execute(
                     "INSERT INTO users_communities (user_id, community_id) VALUES (%s, %s)",
                     (user_id, community_id),
                 )
+
+
 
     def insert_expenses(self):
         self.cursor_obj.execute(
@@ -89,7 +101,6 @@ class DataMocking:
             period = (harvest_date - sowing_date).days
 
             if period <= 0:
-                print("if")
                 continue
 
             for _ in range(5):
@@ -99,11 +110,6 @@ class DataMocking:
 
                 category_id = random.randint(1, 4)
                 amount = random.randint(100, 1000)
-                print("\n\n\n")
-                print(f"{expense_date =}")
-                print(f"{category_id =}")
-                print(f"{amount =}")
-                print("\n\n\n")
                 self.cursor_obj.execute(
                     """
                     INSERT INTO expenses (record_id, category_id, amount, date)
@@ -111,9 +117,7 @@ class DataMocking:
                 """,
                     (record_id, category_id, amount, expense_date),
                 )
-        # con.commit()
-        # self.cursor_obj.close()
-        # con.close()
+
 
     def insert_portable_devices_communities(self):
         self.cursor_obj.execute("SELECT id FROM communities")
@@ -234,6 +238,7 @@ class DataMocking:
             change = 0
             for product in products_armenia:
                 if product[0] == product_name:
+                    
                     if (
                         avg_fertilizer_quantity - product[12]
                         > avg_fertilizer_quantity - product[13]
@@ -874,10 +879,15 @@ class DataMocking:
         con.commit()
         self.cursor_obj.close()
         con.close()
-    def insert_table(self, table_name):
+
+    def insert_table(self, table_name, **args):
         if table_name == "1":
-            self.insert_users()
-            print("Users table inserted successfully")
+            if "min_users_per_community" in args:
+                self.insert_users(args["min_users_per_community"])
+                print("Users table inserted successfully")
+            else:
+                self.insert_users()
+                print("Users table inserted successfully")
         elif table_name == "2":
             self.insert_measurement_units()
             print("Measurement units table inserted successfully")
@@ -940,6 +950,7 @@ class DataMocking:
             print("Devices calendars table inserted successfully")
         else:
             print(f"Table number {table_name} is not recognized.")
+
     def tables(self):
         print("1: Users")
         print("2: Measurement units")
@@ -965,16 +976,25 @@ class DataMocking:
 
     def run(self):
         change = input("Do you need to change anything? (y/yes or n/no): ")
+        changes = {}
+        if change.lower() in ["y", "yes"]:
+            while True:
+                change_input = input("Enter the change you want to make (key=new_value), or enter 'done' to finish: ")
+                if change_input.lower() == "done":
+                    break
+                else:
+                    key, value = change_input.split("=")
+                    changes[key] = value
 
         if change.lower() in ["n", "no"]:
-            yes = input(
-                "If you need to run all tables with fixed data, press 'y'. If not, press 'n': "
-            )
+            yes = input("If you need to run all tables, press 'y'. If not, press 'n': ")
 
             if yes.lower() == "n":
                 table_count = int(input("How many tables do you need to insert: "))
-                if table_count > 1:
-                    print("Please specify the tables to insert: Press table numbers which you woth to insert splite its with space:")
+                if table_count >= 1:
+                    print(
+                        "Please specify the tables to insert: Press table numbers which you woth to insert splite its with space:"
+                    )
                     self.tables()
                     table_names = input(
                         "Enter table numbers separated by space: "
@@ -982,135 +1002,15 @@ class DataMocking:
                     if table_count == table_names.__len__():
                         for table_name in table_names:
                             self.insert_table(table_name)
+                        con.commit()
+                        self.cursor_obj.close()
+                        con.close()
                     else:
                         print("Tble names much more than table count")
             elif yes.lower() == "y":
-                self.insert_users()
-                print("Users table inserted successfully")
-
-                self.insert_measurement_units()
-                print("Measurement units table inserted successfully")
-
-                self.fields()
-                print("Fields table inserted successfully")
-
-                self.insert_precipitation_types()
-                print("Precipitation types table inserted successfully")
-
-                self.insert_product_types()
-                print("Product types table inserted successfully")
-
-                self.insert_products()
-                print("Products table inserted successfully")
-
-                self.insert_records()
-                print("Records table inserted successfully")
-
-                self.insert_expense_categories()
-                print("Expense categories table inserted successfully")
-
-                self.insert_portable_devices()
-                print("Portable devices table inserted successfully")
-
-                self.insert_portable_devices_communities()
-                print("Portable devices communities table inserted successfully")
-
-                self.insert_plantings()
-                print("Plantings table inserted successfully")
-
-                self.insert_harvest()
-                print("Harvest table inserted successfully")
-
-                self.insert_planting_devices()
-                print("Planting devices table inserted successfully")
-
-                self.insert_harvest_devices()
-                print("Harvest devices table inserted successfully")
-
-                self.insert_expenses()
-                print("Expenses table inserted successfully")
-
-                self.insert_revenues()
-                print("Revenues table inserted successfully")
-
-                self.insert_weather_metrics()
-                print("Weather metrics table inserted successfully")
-
-                self.insert_cultivations()
-                print("Cultivations table inserted successfully")
-
-                self.calculate_yields()
-                print("Yields calculated successfully")
-
-                self.insert_cultivation_devices()
-                print("Cultivation devices table inserted successfully")
-
-                self.insert_devices_calendars()
-                print("Devices calendars table inserted successfully")()
-
+                for table_name in range(1, 22):
+                    self.insert_table(str(table_name))
         elif change.lower() in ["y", "yes"]:
-            change_data = input("what do you need to change")
-            self.insert_users()
-            print("Users table inserted successfully")
-
-            self.insert_measurement_units()
-            print("Measurement units table inserted successfully")
-
-            self.fields()
-            print("Fields table inserted successfully")
-
-            self.insert_precipitation_types()
-            print("Precipitation types table inserted successfully")
-
-            self.insert_product_types()
-            print("Product types table inserted successfully")
-
-            self.insert_products()
-            print("Products table inserted successfully")
-
-            self.insert_records()
-            print("Records table inserted successfully")
-
-            self.insert_expense_categories()
-            print("Expense categories table inserted successfully")
-
-            self.insert_portable_devices()
-            print("Portable devices table inserted successfully")
-
-            self.insert_portable_devices_communities()
-            print("Portable devices communities table inserted successfully")
-
-            self.insert_plantings()
-            print("Plantings table inserted successfully")
-
-            self.insert_harvest()
-            print("Harvest table inserted successfully")
-
-            self.insert_planting_devices()
-            print("Planting devices table inserted successfully")
-
-            self.insert_harvest_devices()
-            print("Harvest devices table inserted successfully")
-
-            self.insert_expenses()
-            print("Expenses table inserted successfully")
-
-            self.insert_revenues()
-            print("Revenues table inserted successfully")
-
-            self.insert_weather_metrics()
-            print("Weather metrics table inserted successfully")
-
-            self.insert_cultivations()
-            print("Cultivations table inserted successfully")
-
-            self.calculate_yields()
-            print("Yields calculated successfully")
-
-            self.insert_cultivation_devices()
-            print("Cultivation devices table inserted successfully")
-
-            self.insert_devices_calendars()
-            print("Devices calendars table inserted successfully")()
-        else:
-            print("Invalid input. Please enter 'y/yes' or 'n/no'.")
+            for table_name in range(1, 22):
+                self.insert_table(str(table_name), **changes)
+            

@@ -5,6 +5,18 @@ min_field_size = 30
 duration = 5 
 min_users_per_community = 15
 max_users_per_community = 20
+community_weights = {
+            "Vanadzor": 0.9,
+            "Alaverdi": 0.8,
+            "Spitak": 0.7,
+            "Stepanavan": 0.5,
+            "Tashir": 0.3,
+            "Akhtala": 0.4,
+            "Tumanyan": 0.5,
+            "Gyulagarak": 0.3,
+            "Pambak": 0.6,
+            "Odzun": 0.7
+        }
 portable_device_data = (
     {"truck":("BelAZ 75710", "KAMAZ-65225", "MAZ-6501", "KrAZ-7140H6", "URAL-5557",
     "BelAZ 75302", "KAMAZ-65228", "MAZ-6516", "KrAZ-65101", "URAL-4320",
