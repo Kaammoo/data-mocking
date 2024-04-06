@@ -979,7 +979,7 @@ class DataMocking:
                     self.tables()
                     table_names = input(
                         "Enter table numbers separated by space: "
-                    ).split()
+                    ).split().sort()
                     if table_count == table_names.__len__():
                         for table_name in table_names:
                             self.insert_table(table_name)
