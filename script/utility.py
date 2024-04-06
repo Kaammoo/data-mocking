@@ -42,7 +42,11 @@ class DataMocking:
                 return product[6], product[7], product[10], product[11]
         return None
 
-    def insert_users(self, min_users_per_communitys=min_users_per_community):
+    def insert_users(self, min_users_per_communitys=None, max_users_per_communitys=None):
+        # Provide default values if parameters are None
+        min_users_per_community = int(min_users_per_communitys) if min_users_per_communitys is not None else min_users_per_community1
+        max_users_per_community = int(max_users_per_communitys) if max_users_per_communitys is not None else max_users_per_community2
+
         # Fetch community names from the database
         self.cursor_obj.execute("SELECT name FROM communities")
         community_names = [entry[0] for entry in self.cursor_obj.fetchall()]
@@ -54,7 +58,7 @@ class DataMocking:
         # Insert users into the users table
         for community_name in community_names:
             weight = community_weights.get(community_name, 0.5)  # Default weight is 0.5 if not found
-            adjusted_users = round(((max_users_per_community - min_users_per_communitys) * weight) + min_users_per_communitys)
+            adjusted_users = round(((max_users_per_community - min_users_per_community) * weight) + min_users_per_community)
 
             for _ in range(adjusted_users):
                 name = self.fake.name()
@@ -83,6 +87,7 @@ class DataMocking:
                     "INSERT INTO users_communities (user_id, community_id) VALUES (%s, %s)",
                     (user_id, community_id),
                 )
+
 
 
 
@@ -866,6 +871,12 @@ class DataMocking:
             if "min_users_per_community" in args:
                 self.insert_users(args["min_users_per_community"])
                 print("Users table inserted successfully")
+            elif "max_users_per_community" in args:
+                self.insert_users(args["max_users_per_community"])
+                print("Users table inserted successfully")
+            elif "max_users_per_community" in args and "min_users_per_community" in args:
+                self.insert_users(args["max_users_per_community"])
+                print("Users table inserted successfully") 
             else:
                 self.insert_users()
                 print("Users table inserted successfully")

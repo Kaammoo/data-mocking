@@ -3,8 +3,8 @@ min_field_count = 15
 max_field_size = 150
 min_field_size = 30
 duration = 5 
-min_users_per_community = 15
-max_users_per_community = 20
+min_users_per_community1 = 15
+max_users_per_community2 = 20
 community_weights = {
             "Vanadzor": 0.9,
             "Alaverdi": 0.8,
