@@ -672,27 +672,8 @@ class DataMocking:
                             rand_day = random.randint(
                                 min_growth_duration, max_growth_duration
                             )
-                            harvest_date_day = planting_date.day + rand_day
-                            planting_date_month = planting_date.month
-                            harvest_year = planting_date.year
-                            harvest_month = planting_date.month
-                            if harvest_date_day >= 28:
-                                harvest_day = harvest_date_day % 28
-                                harvest_month = (
-                                    harvest_date_day // 28 + planting_date_month
-                                )
-                            if (planting_date_month + harvest_month) >= 12:
-                                harvest_year += 1
-                                harvest_month = (
-                                    planting_date_month + harvest_month
-                                ) % 12
-                            if harvest_day == 0:
-                                harvest_day += 1
-                            if harvest_month == 0:
-                                harvest_month += 1
-                            harvest_date = datetime.datetime(
-                                harvest_year, harvest_month, harvest_day
-                            )
+                            harvest_date = planting_date + datetime.timedelta(days=rand_day)
+
                             field_id = record[2]
                             self.cursor_obj.execute(
                                 f"SELECT size FROM fields WHERE id = {field_id}"
