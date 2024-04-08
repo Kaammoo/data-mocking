@@ -1,6 +1,7 @@
 import random
 from faker import Faker
 from db import con
+from script.configs import *
 from consts import *
 import datetime
 from time import time
@@ -108,7 +109,7 @@ class DataMocking:
             if period <= 0:
                 continue
 
-            for _ in range(5):
+            for _ in range(duration):
                 expense_date = sowing_date + datetime.timedelta(
                     days=random.randint(0, period)
                 )
@@ -135,22 +136,23 @@ class DataMocking:
                 portable_device_id = portable_device[0]
                 portable_device_name = portable_device[1]
                 if (
-                    "Shovel" == portable_device_name
-                    or "Rake" == portable_device_name
+                    portable_device_name == "Shovel"
+                    or portable_device_name == "Rake"
                     or portable_device_name == "Spade"
                     or portable_device_name == "Hoe"
                 ):
-                    input_device_count = random.randint(100, 200)
+                    input_device_count = random.randint(*devices_weights["hand tool"])
                 elif "Tractor" in portable_device_name:
-                    input_device_count = random.randint(10, 20)
+                    input_device_count = random.randint(*devices_weights["Tractor or Combine"])
                 elif "Combine" in portable_device_name:
-                    input_device_count = random.randint(10, 20)
+                    input_device_count = random.randint(*devices_weights["Tractor or Combine"])
                 else:
-                    input_device_count = random.randint(1, 9)
-                self.cursor_obj.execute(
-                    "INSERT INTO portable_devices_communities (portable_device_id, community_id, quantity) VALUES (%s, %s, %s)",
-                    (portable_device_id, community_id, input_device_count),
-                )
+                    input_device_count = random.randint(*devices_weights["Truck"])
+                if input_device_count > 0:
+                    self.cursor_obj.execute(
+                        "INSERT INTO portable_devices_communities (portable_device_id, community_id, quantity) VALUES (%s, %s, %s)",
+                        (portable_device_id, community_id, input_device_count),
+                    )
 
     def insert_planting_devices(self):
         self.cursor_obj.execute("SELECT id FROM plantings")
@@ -426,7 +428,7 @@ class DataMocking:
             )
             fields = self.cursor_obj.fetchall()
             for field in fields:
-                unique_products = random.sample(products, 5)
+                unique_products = random.sample(products, duration)
                 for product in unique_products:
                     self.cursor_obj.execute(
                         "INSERT INTO records (community_id, field_id, product_id) VALUES (%s, %s, %s)",
@@ -990,7 +992,8 @@ class DataMocking:
                     self.tables()
                     table_names = input(
                         "Enter table numbers separated by space: "
-                    ).split().sort()
+                    ).split()
+                    table_names.sort()
                     if table_count == table_names.__len__():
                         for table_name in table_names:
                             self.insert_table(table_name)
