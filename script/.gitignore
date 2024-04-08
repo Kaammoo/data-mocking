@@ -1,0 +1,58 @@
+# Ignore macOS system files
+.DS_Store
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore text editor backup files
+*~
+*.swp
+*.swo
+*.bak
+*.backup
+
+# Ignore compiled binary files
+*.pyc
+*.pyo
+*.class
+*.dll
+*.exe
+*.so
+*.dylib
+
+# Ignore package files
+*.egg
+*.egg-info
+dist/
+build/
+*.egg-info/
+__pycache__/
+
+# Ignore virtual environments
+venv/
+.env/
+.venv/
+
+# Ignore logs and other generated files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage/
+
+# Ignore database files
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+
+# Ignore OS-generated files
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Ignore node_modules directory
+node_modules/
+
