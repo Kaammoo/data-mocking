@@ -1,8 +1,9 @@
 import random
 from faker import Faker
-from db import con
-from script.configs import *
-from consts import *
+from Db import con
+from GetSchema import fetch_schema
+from Configs import *
+from Consts import *
 import datetime
 from time import time
 
@@ -11,6 +12,7 @@ class DataMocking:
     def __init__(self):
         self.cursor_obj = con.cursor()
         self.fake = Faker()
+        self.schema = fetch_schema()
 
     def get_season(self, month):
         if month in range(3, 6):
@@ -43,165 +45,277 @@ class DataMocking:
                 return product[6], product[7], product[10], product[11]
         return None
 
-    def insert_users(self, min_users_per_communitys=None, max_users_per_communitys=None):
-        # Provide default values if parameters are None
-        min_users_per_community = int(min_users_per_communitys) if min_users_per_communitys is not None else min_users_per_community1
-        max_users_per_community = int(max_users_per_communitys) if max_users_per_communitys is not None else max_users_per_community2
+    def insert_users(self, min_users_per_communitys=min_users_per_community1, max_users_per_communitys=max_users_per_community1):
+        # Fetch column names and data types for the users table from the schema
+        user_columns = self.schema.get('users', {})
+        if user_columns:
+            column_names = ', '.join([col_name for col_name in user_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(user_columns) - 1))
+            print(len(column_names))
 
-        # Fetch community names from the database
-        self.cursor_obj.execute("SELECT name FROM communities")
-        community_names = [entry[0] for entry in self.cursor_obj.fetchall()]
+            # Provide default values if parameters are None
+            min_users_per_community = int(min_users_per_communitys)
+            max_users_per_community = int(max_users_per_communitys)
 
-        unique_id = str(random.randint(1, 500))
+            # Fetch community names from the database
+            self.cursor_obj.execute("SELECT name FROM communities")
+            community_names = [entry[0] for entry in self.cursor_obj.fetchall()]
 
-        users_data = []
+            users_data = []
 
-        # Insert users into the users table
-        for community_name in community_names:
-            weight = community_weights.get(community_name, 0.5)  # Default weight is 0.5 if not found
-            adjusted_users = round(((max_users_per_community - min_users_per_community) * weight) + min_users_per_community)
+            # Insert users into the users table
+            for community_name in community_names:
+                weight = community_weights.get(community_name, 0.5)  # Default weight is 0.5 if not found
+                adjusted_users = round(((max_users_per_community - min_users_per_community) * weight) + min_users_per_community)
 
-            for _ in range(adjusted_users):
-                name = self.fake.name()
-                email = self.fake.email() + f"_{unique_id}"
-                code = random.choice(["94", "98", "93", "33", "91", "99", "55", "95"])
-                phone_number = "+374" + code + self.fake.numerify("#######")
+                for _ in range(adjusted_users):
+                    name = self.fake.name()
+                    unique_id = str(random.randint(1, 500))
+                    email = self.fake.email() + f"_{unique_id}"
+                    code = random.choice(["94", "98", "93", "33", "91", "99", "55", "95"])
+                    phone_number = "+374" + code + self.fake.numerify("#######")
 
-                users_data.append((name, email, phone_number))
+                    # Make sure the number of values matches the number of placeholders
+                    users_data.append((name, email, phone_number, None))
 
-        # Insert all users into the users table
-        self.cursor_obj.executemany(
-            "INSERT INTO users (name, email, phone_number) VALUES (%s, %s, %s) RETURNING id",
-            users_data
-        )
+            # Insert all users into the users table
+            print(f"users, {users_data = }")
+            print(f"users, {placeholders = }")
+            print(f"users, {column_names = }")
+            self.cursor_obj.executemany(
+                f"INSERT INTO users ({column_names}) VALUES ({placeholders}) RETURNING id",
+                users_data
+            )
 
-        # Fetch all user IDs after inserting them
-        self.cursor_obj.execute("SELECT id FROM users")
-        user_ids = self.cursor_obj.fetchall()
+            # Fetch all user IDs after inserting them
+            self.cursor_obj.execute("SELECT id FROM users")
+            user_ids = self.cursor_obj.fetchall()
 
-        # Establish relationships between users and communities in the users_communities table
-        for community_name in community_names:
-            community_id = community_names.index(community_name) + 1
-            community_user_ids = random.sample(user_ids, k=round(len(user_ids) * community_weights.get(community_name, 0.5)))
-            for user_id, in community_user_ids:
-                self.cursor_obj.execute(
-                    "INSERT INTO users_communities (user_id, community_id) VALUES (%s, %s)",
-                    (user_id, community_id),
+            # Establish relationships between users and communities in the users_communities table
+            users_communities_columns = self.schema.get('users_communities', {})
+            if users_communities_columns:
+                column_names = ', '.join([col_name for col_name in users_communities_columns.keys() if col_name != 'id'])
+                placeholders = ', '.join(['%s'] * (len(users_communities_columns) - 1))
+            users_communities_data = []
+            for community_name in community_names:
+                community_id = community_names.index(community_name) + 1
+                community_user_ids = random.sample(user_ids, k=round(len(user_ids) * community_weights.get(community_name, 0.5)))
+                for user_id, in community_user_ids:
+                    users_communities_data.append((user_id, community_id))
+
+            # Insert user-community relationships using executemany
+            if users_communities_data:
+                print(f"users_communities, {column_names = }")
+                self.cursor_obj.executemany(
+                    f"INSERT INTO users_communities ({column_names}) VALUES ({placeholders})",
+                    users_communities_data
                 )
 
+    def insert_records(self):
+        # Fetch column names and data types for the records table from the schema
+        record_columns = self.schema.get('records', {})
+        if record_columns:
+            column_names = ', '.join([col_name for col_name in record_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(record_columns) - 1))
 
+            # List to store tuples for bulk insertion
+            records_data = []
 
+            self.cursor_obj.execute("SELECT * FROM communities")
+            communities = self.cursor_obj.fetchall()
+            self.cursor_obj.execute("SELECT * FROM products")
+            products = self.cursor_obj.fetchall()
+            
+            for community in communities:
+                community_name = community[1] + "%"
+                community_id = community[0]
+                self.cursor_obj.execute(
+                    f"SELECT * FROM fields WHERE name LIKE '{community_name}'"
+                )
+                fields = self.cursor_obj.fetchall()
+                for field in fields:
+                    unique_products = random.sample(products, duration)
+                    for product in unique_products:
+                        # Append tuple to records_data list
+                        records_data.append((community_id, field[0], product[0]))
+            # Perform bulk insertion
+            self.cursor_obj.executemany(
+                f"INSERT INTO records ({column_names}) VALUES ({placeholders})",
+                records_data
+            )
 
     def insert_expenses(self):
-        self.cursor_obj.execute(
-            """
-            SELECT p.date, h.date, p.record_id 
-            FROM plantings p 
-            INNER JOIN harvests h ON p.record_id = h.record_id
-        """
-        )
+        # Fetch column names and data types for the expenses table from the schema
+        expenses_columns = self.schema.get('expenses', {})
+        if expenses_columns:
+            column_names = ', '.join([col_name for col_name in expenses_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(expenses_columns) - 1))
 
-        sowing_harvest_record_dates = self.cursor_obj.fetchall()
+            self.cursor_obj.execute(
+                """
+                SELECT p.date, h.date, p.record_id 
+                FROM plantings p 
+                INNER JOIN harvests h ON p.record_id = h.record_id
+                """
+            )
 
-        for sowing_date, harvest_date, record_id in sowing_harvest_record_dates:
-            period = (harvest_date - sowing_date).days
+            sowing_harvest_record_dates = self.cursor_obj.fetchall()
 
-            if period <= 0:
-                continue
+            # Prepare a list to store all tuples to be inserted
+            insert_data = []
 
-            for _ in range(duration):
-                expense_date = sowing_date + datetime.timedelta(
-                    days=random.randint(0, period)
-                )
+            for sowing_date, harvest_date, record_id in sowing_harvest_record_dates:
+                period = (harvest_date - sowing_date).days
 
-                category_id = random.randint(1, 4)
-                amount = random.randint(100, 1000)
-                self.cursor_obj.execute(
-                    """
-                    INSERT INTO expenses (record_id, category_id, amount, date)
-                    VALUES (%s, %s, %s, %s)
+                if period <= 0:
+                    continue
+
+                for _ in range(duration):
+                    expense_date = sowing_date + datetime.timedelta(
+                        days=random.randint(0, period)
+                    )
+
+                    category_id = random.randint(1, 4)
+                    amount = random.randint(100, 1000)
+
+                    # Append the tuple to the list
+                    insert_data.append((record_id, category_id, amount, expense_date))
+
+            # Execute the insert query using executemany
+            print(column_names)
+            self.cursor_obj.executemany(
+                f"""
+                INSERT INTO expenses ({column_names})
+                VALUES ({placeholders})
                 """,
-                    (record_id, category_id, amount, expense_date),
-                )
-
+                insert_data
+            )
 
     def insert_portable_devices_communities(self):
-        self.cursor_obj.execute("SELECT id FROM communities")
-        communities = self.cursor_obj.fetchall()
-        self.cursor_obj.execute("SELECT id, name FROM portable_devices")
-        portable_devices = self.cursor_obj.fetchall()
-        for community in communities:
-            community_id = community[0]
-            for portable_device in portable_devices:
-                portable_device_id = portable_device[0]
-                portable_device_name = portable_device[1]
-                if (
-                    portable_device_name == "Shovel"
-                    or portable_device_name == "Rake"
-                    or portable_device_name == "Spade"
-                    or portable_device_name == "Hoe"
-                ):
-                    input_device_count = random.randint(*devices_weights["hand tool"])
-                elif "Tractor" in portable_device_name:
-                    input_device_count = random.randint(*devices_weights["Tractor or Combine"])
-                elif "Combine" in portable_device_name:
-                    input_device_count = random.randint(*devices_weights["Tractor or Combine"])
-                else:
-                    input_device_count = random.randint(*devices_weights["Truck"])
-                if input_device_count > 0:
-                    self.cursor_obj.execute(
-                        "INSERT INTO portable_devices_communities (portable_device_id, community_id, quantity) VALUES (%s, %s, %s)",
-                        (portable_device_id, community_id, input_device_count),
-                    )
+        # Fetch column names and data types for the portable_devices_communities table from the schema
+        pdc_columns = self.schema.get('portable_devices_communities', {})
+        if pdc_columns:
+            column_names = ', '.join([col_name for col_name in pdc_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(pdc_columns) - 1))
+
+            # Fetch communities and portable devices from the database
+            self.cursor_obj.execute("SELECT id FROM communities")
+            communities = self.cursor_obj.fetchall()
+            self.cursor_obj.execute("SELECT id, name FROM portable_devices")
+            portable_devices = self.cursor_obj.fetchall()
+
+            # List to store tuples of values to insert
+            insertion_data = []
+
+            for community in communities:
+                community_id = community[0]
+                for portable_device in portable_devices:
+                    portable_device_id = portable_device[0]
+                    portable_device_name = portable_device[1]
+                    if (
+                        portable_device_name == "Shovel"
+                        or portable_device_name == "Rake"
+                        or portable_device_name == "Spade"
+                        or portable_device_name == "Hoe"
+                    ):
+                        input_device_count = random.randint(*devices_weights["hand tool"])
+                    elif "Tractor" in portable_device_name or "Combine" in portable_device_name:
+                        input_device_count = random.randint(*devices_weights["Tractor or Combine"])
+                    else:
+                        input_device_count = random.randint(*devices_weights["Truck"])
+                    if input_device_count > 0:
+                        # Append tuple of values for each insertion
+                        insertion_data.append((portable_device_id, community_id, input_device_count))
+
+            # Execute the insert query using executemany
+            print(f"portable_devices_communities, {column_names}")
+            self.cursor_obj.executemany(
+                f"INSERT INTO portable_devices_communities ({column_names}) VALUES ({placeholders})",
+                insertion_data
+            )
+
 
     def insert_planting_devices(self):
-        self.cursor_obj.execute("SELECT id FROM plantings")
-        plantings = self.cursor_obj.fetchall()
-        self.cursor_obj.execute("SELECT id, quantity FROM portable_devices_communities")
-        portable_devices_communities = self.cursor_obj.fetchall()
-        for planting in plantings:
-            planting_id = planting[0]
-            for portable_device_community in portable_devices_communities:
-                portable_device_community_id = portable_device_community[0]
-                portable_device_community_quantity = portable_device_community[1]
-                if portable_device_community_quantity > 7:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 4
-                    )
-                else:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity
-                    )
-                if insert_quantity > 0:
-                    self.cursor_obj.execute(
-                        "INSERT INTO planting_devices (planting_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
-                        (planting_id, portable_device_community_id, insert_quantity),
-                    )
+        # Fetch column names and data types for the planting_devices table from the schema
+        planting_devices_columns = self.schema.get('planting_devices', {})
+        if planting_devices_columns:
+            column_names = ', '.join([col_name for col_name in planting_devices_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(planting_devices_columns) - 1))
 
-    def insert_harvest_devices(self):
-        self.cursor_obj.execute("SELECT id FROM harvests")
-        harvests = self.cursor_obj.fetchall()
-        self.cursor_obj.execute("SELECT id, quantity FROM portable_devices_communities")
-        portable_devices_communities = self.cursor_obj.fetchall()
-        for harvest in harvests:
-            harvest_id = harvest[0]
-            for portable_device_community in portable_devices_communities:
-                portable_device_community_id = portable_device_community[0]
-                portable_device_community_quantity = portable_device_community[1]
-                if portable_device_community_quantity > 7:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 4
-                    )
-                else:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity
-                    )
-                if insert_quantity > 0:
+            # Fetch planting and portable device community data
+            self.cursor_obj.execute("SELECT id FROM plantings")
+            plantings = self.cursor_obj.fetchall()
+            self.cursor_obj.execute("SELECT id, quantity FROM portable_devices_communities")
+            portable_devices_communities = self.cursor_obj.fetchall()
 
-                    self.cursor_obj.execute(
-                        "INSERT INTO harvest_devices (harvest_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
-                        (harvest_id, portable_device_community_id, insert_quantity),
-                    )
+            # List to store tuples of values to insert
+            insertion_data = []
+
+            # Iterate over plantings and portable device communities to prepare insertion data
+            for planting in plantings:
+                planting_id = planting[0]
+                for portable_device_community in portable_devices_communities:
+                    portable_device_community_id = portable_device_community[0]
+                    portable_device_community_quantity = portable_device_community[1]
+                    if portable_device_community_quantity > 7:
+                        insert_quantity = random.randint(
+                            0, portable_device_community_quantity // 4
+                        )
+                    else:
+                        insert_quantity = random.randint(
+                            0, portable_device_community_quantity
+                        )
+                    if insert_quantity > 0:
+                        insertion_data.append((planting_id, portable_device_community_id, insert_quantity))
+
+            # Execute the insert query using executemany
+            print(f"planting_devices, {column_names = }")
+            self.cursor_obj.executemany(
+                f"INSERT INTO planting_devices ({column_names}) VALUES ({placeholders})",
+                insertion_data
+            )
+
+
+    def insert_harvests_devices(self):
+        # Fetch column names and data types for the harvest_devices table from the schema
+        harvest_devices_columns = self.schema.get('harvest_devices', {})
+        if harvest_devices_columns:
+            column_names = ', '.join([col_name for col_name in harvest_devices_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(harvest_devices_columns) - 1))
+
+            # Fetch harvests and portable device community data
+            self.cursor_obj.execute("SELECT id FROM harvests")
+            harvests = self.cursor_obj.fetchall()
+            self.cursor_obj.execute("SELECT id, quantity FROM portable_devices_communities")
+            portable_devices_communities = self.cursor_obj.fetchall()
+
+            # List to store tuples of values to insert
+            insertion_data = []
+
+            # Iterate over harvests and portable device communities to prepare insertion data
+            for harvest in harvests:
+                harvest_id = harvest[0]
+                for portable_device_community in portable_devices_communities:
+                    portable_device_community_id = portable_device_community[0]
+                    portable_device_community_quantity = portable_device_community[1]
+                    if portable_device_community_quantity > 7:
+                        insert_quantity = random.randint(
+                            0, portable_device_community_quantity // 4
+                        )
+                    else:
+                        insert_quantity = random.randint(
+                            0, portable_device_community_quantity
+                        )
+                    if insert_quantity > 0:
+                        insertion_data.append((harvest_id, portable_device_community_id, insert_quantity))
+
+            # Execute the insert query using executemany
+            print(f"harvest_devices, {column_names = }")
+            self.cursor_obj.executemany(
+                f"INSERT INTO harvest_devices ({column_names}) VALUES ({placeholders})",
+                insertion_data
+            )
+
 
     def calculate_yields(self):
         self.cursor_obj.execute(
@@ -273,117 +387,152 @@ class DataMocking:
             )
 
     def insert_weather_metrics(self):
-        self.cursor_obj.execute(
-            """
-            SELECT p.date, r.community_id
-            FROM plantings p
-            INNER JOIN records r ON p.record_id = r.id
-        """
-        )
-        sowing_dates_and_communities = self.cursor_obj.fetchall()
-        self.cursor_obj.execute(
-            """
-            SELECT date 
-            FROM harvests
-        """
-        )
-        harvest_dates = self.cursor_obj.fetchall()
-        for sowing_date, community_id in sowing_dates_and_communities:
-            corresponding_harvest_date = None
-            for (harvest_date,) in harvest_dates:
-                if harvest_date > sowing_date:
-                    corresponding_harvest_date = harvest_date
-                    break
-            if corresponding_harvest_date:
-                current_date = sowing_date
-                while current_date < corresponding_harvest_date:
-                    month = current_date.month
-                    current_season = self.get_season(month)
-                    if current_season == "Summer":
-                        precipitation_types = ["rain", "without_prec"]
-                        weights = [
-                            0.3,
-                            0.7,
-                        ]  # Adjust the weights according to your preference
-                        temp_range = (15, 30)
-                        humidity_range = (30, 80)
-                    elif current_season == "Winter":
-                        precipitation_types = ["snow", "hail", "without_prec"]
-                        weights = [
-                            0.2,
-                            0.1,
-                            0.7,
-                        ]  # Adjust the weights according to your preference
-                        temp_range = (-10, 5)
-                        humidity_range = (20, 70)
-                    elif current_season == "Spring" or month == 9 or month == 10:
-                        precipitation_types = ["rain", "hail", "without_prec"]
-                        weights = [
-                            0.4,
-                            0.01,
-                            0.59,
-                        ]  # Adjust the weights according to your preference
-                        temp_range = (10, 20)
-                        humidity_range = (20, 60)
-                    else:
-                        precipitation_types = ["rain", "snow", "hail", "without_prec"]
-                        weights = [
-                            0.20,
-                            0.30,
-                            0.1,
-                            0.4,
-                        ]  # Adjust the weights according to your preference
-                        temp_range = (0, 15)
-                        humidity_range = (40, 70)
+        # Fetch column names and data types for the weather_metrics table from the schema
+        weather_columns = self.schema.get('weather_metrics', {})
+        if weather_columns:
+            column_names = ', '.join([col_name for col_name in weather_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(weather_columns) - 1))
 
-                    prec_type = random.choices(precipitation_types, weights=weights)[0]
-                    humidity = random.randint(*humidity_range)
-                    temperature = random.randint(*temp_range)
-                    if prec_type == "rain":
-                        rain_drop = random.randint(10, 100)
-                    else:
-                        rain_drop = None
-                    if prec_type is not None:
-                        self.cursor_obj.execute(
-                            """
-                            INSERT INTO weather_metrics (community_id, rain_drop, humidity, temperature, prec_type_id, date)
-                            VALUES (%s, %s, %s, %s, (SELECT id FROM prec_types WHERE name = %s), %s)
-                        """,
-                            (
+            self.cursor_obj.execute(
+                """
+                SELECT p.date, r.community_id
+                FROM plantings p
+                INNER JOIN records r ON p.record_id = r.id
+            """
+            )
+            sowing_dates_and_communities = self.cursor_obj.fetchall()
+            self.cursor_obj.execute(
+                """
+                SELECT date 
+                FROM harvests
+            """
+            )
+            harvest_dates = self.cursor_obj.fetchall()
+
+            # Prepare data for executemany
+            weather_data = []
+
+            for sowing_date, community_id in sowing_dates_and_communities:
+                corresponding_harvest_date = None
+                for (harvest_date,) in harvest_dates:
+                    if harvest_date > sowing_date:
+                        corresponding_harvest_date = harvest_date
+                        break
+                if corresponding_harvest_date:
+                    current_date = sowing_date
+                    while current_date < corresponding_harvest_date:
+                        month = current_date.month
+                        current_season = self.get_season(month)
+                        if current_season == "Summer":
+                            precipitation_types = ["rain", "without_prec"]
+                            weights = [
+                                0.3,
+                                0.7,
+                            ]  # Adjust the weights according to your preference
+                            temp_range = (15, 30)
+                            humidity_range = (30, 80)
+                        elif current_season == "Winter":
+                            precipitation_types = ["snow", "hail", "without_prec"]
+                            weights = [
+                                0.2,
+                                0.1,
+                                0.7,
+                            ]  # Adjust the weights according to your preference
+                            temp_range = (-10, 5)
+                            humidity_range = (20, 70)
+                        elif current_season == "Spring" or month == 9 or month == 10:
+                            precipitation_types = ["rain", "hail", "without_prec"]
+                            weights = [
+                                0.4,
+                                0.01,
+                                0.59,
+                            ]  # Adjust the weights according to your preference
+                            temp_range = (10, 20)
+                            humidity_range = (20, 60)
+                        else:
+                            precipitation_types = ["rain", "snow", "hail", "without_prec"]
+                            weights = [
+                                0.20,
+                                0.30,
+                                0.1,
+                                0.4,
+                            ]  # Adjust the weights according to your preference
+                            temp_range = (0, 15)
+                            humidity_range = (40, 70)
+
+                        prec_type = random.choices(precipitation_types, weights=weights)[0]
+                        humidity = random.randint(*humidity_range)
+                        temperature = random.randint(*temp_range)
+                        if prec_type == "rain":
+                            rain_drop = random.randint(10, 100)
+                        else:
+                            rain_drop = None
+                        if prec_type is not None:
+                            weather_data.append((
                                 community_id,
                                 rain_drop,
                                 humidity,
                                 temperature,
                                 prec_type,
                                 current_date,
-                            ),
-                        )
+                            ))
 
-                    current_date += datetime.timedelta(days=1)
+                        current_date += datetime.timedelta(days=1)
+
+            # Insert weather data using executemany
+            if weather_data:
+                print(f"weather_metrics, {column_names = }")
+                self.cursor_obj.executemany(
+                    f"""
+                    INSERT INTO weather_metrics ({column_names})
+                    VALUES ({placeholders})
+                    """,
+                    weather_data
+                )
 
     def insert_product_types(self):
-        self.cursor_obj.execute("SELECT id FROM products")
-        product_type_data = [("vegetables",), ("cereal",)]
-        for product_type in product_type_data:
-            sql = "INSERT INTO product_types (type) VALUES (%s)"
-            self.cursor_obj.execute(sql, product_type)
+        # Fetch column names and data types for the product_types table from the schema
+        product_type_columns = self.schema.get('product_types', {})
+        if product_type_columns:
+            column_names = ', '.join([col_name for col_name in product_type_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(product_type_columns) - 1))
+
+            product_type_data = [("vegetables",), ("cereal",)]
+            for product_type in product_type_data:
+                sql = f"INSERT INTO product_types ({column_names}) VALUES ({placeholders})"
+                self.cursor_obj.execute(sql, product_type)
 
     def insert_products(self):
-        self.cursor_obj.execute(
-            "SELECT id FROM product_types WHERE type = 'vegetables'"
-        )
-        vegetable_id = self.cursor_obj.fetchone()
-        self.cursor_obj.execute("SELECT id FROM product_types WHERE type = 'cereal'")
-        cereal_id = self.cursor_obj.fetchone()
-        for product in products_armenia:
-            if "vegetable" in product[1].lower():
-                type_id = vegetable_id
-            else:
-                type_id = cereal_id
+        # Fetch column names and data types for the products table from the schema
+        product_columns = self.schema.get('products', {})
+        if product_columns:
+            column_names = ', '.join([col_name for col_name in product_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(product_columns) - 1))
 
             self.cursor_obj.execute(
-                "INSERT INTO products (type_id, name, description) VALUES (%s, %s, %s)",
-                (type_id, product[0], product[1]),
+                "SELECT id FROM product_types WHERE type = 'vegetables'"
+            )
+            vegetable_id = self.cursor_obj.fetchone()[0]  # Fetching only the ID
+            self.cursor_obj.execute("SELECT id FROM product_types WHERE type = 'cereal'")
+            cereal_id = self.cursor_obj.fetchone()[0]  # Fetching only the ID
+
+            # List to store tuples of values to insert
+            insertion_data = []
+
+            for product in products_armenia:
+                if "vegetable" in product[1].lower():
+                    type_id = vegetable_id
+                else:
+                    type_id = cereal_id
+
+                # Append tuple of values for each product
+                insertion_data.append((type_id, product[0], product[1]))
+
+            # Execute the insert query using executemany
+            print(f"products, {column_names = }")
+            self.cursor_obj.executemany(
+                f"INSERT INTO products ({column_names}) VALUES ({placeholders})",
+                insertion_data
             )
 
     def insert_measurement_units(self):
@@ -415,80 +564,115 @@ class DataMocking:
                 (harvest_id, amount, revenue_date),
             )
 
-    def insert_records(self):
-        self.cursor_obj.execute("SELECT * FROM communities")
-        communities = self.cursor_obj.fetchall()
-        self.cursor_obj.execute("SELECT * FROM products")
-        products = self.cursor_obj.fetchall()
-        for community in communities:
-            community_name = community[1] + "%"
-            community_id = community[0]
-            self.cursor_obj.execute(
-                f"SELECT * FROM fields WHERE name LIKE '{community_name}'"
-            )
-            fields = self.cursor_obj.fetchall()
-            for field in fields:
-                unique_products = random.sample(products, duration)
-                for product in unique_products:
-                    self.cursor_obj.execute(
-                        "INSERT INTO records (community_id, field_id, product_id) VALUES (%s, %s, %s)",
-                        (community_id, field[0], product[0]),
-                    )
-
     def insert_precipitation_types(self):
-        precipitation_types = [("rain",), ("snow",), ("hail",), ("without_prec",)]
+        # Fetch column names and data types for the prec_types table from the schema
+        prec_types_columns = self.schema.get('prec_types', {})
+        if prec_types_columns:
+            column_names = ', '.join([col_name for col_name in prec_types_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(prec_types_columns) - 1))
 
-        for prec_type in precipitation_types:
-            self.cursor_obj.execute(
-                "INSERT INTO prec_types (name) VALUES (%s)", prec_type
+            # Define the precipitation types to insert
+            precipitation_types = [("rain",), ("snow",), ("hail",), ("without_prec",)]
+
+            # Execute the insert query using executemany
+            print(column_names)
+            self.cursor_obj.executemany(
+                f"INSERT INTO prec_types ({column_names}) VALUES ({placeholders})",
+                precipitation_types
             )
 
     def insert_expense_categories(self):
-        expense_categories = [
-            ("fertilizer",),
-            ("equipment costs",),
-            ("seed purchase",),
-            ("employee expenses",),
-        ]
-        for category in expense_categories:
-            self.cursor_obj.execute(
-                "INSERT INTO expense_categories (name) VALUES (%s)", category
+        # Fetch column names and data types for the expense_categories table from the schema
+        expense_categories_columns = self.schema.get('expense_categories', {})
+        if expense_categories_columns:
+            column_names = ', '.join([col_name for col_name in expense_categories_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(expense_categories_columns) - 1))
+
+            # Define the expense categories to insert
+            expense_categories = [
+                ("fertilizer",),
+                ("equipment costs",),
+                ("seed purchase",),
+                ("employee expenses",),
+            ]
+            print(column_names)
+            # Execute the insert query using executemany
+            self.cursor_obj.executemany(
+                f"INSERT INTO expense_categories ({column_names}) VALUES ({placeholders})",
+                expense_categories
             )
 
-    def fields(self, min_field_count = min_field_count, max_field_count = max_field_count):
-        self.cursor_obj.execute("SELECT * FROM communities")
-        communities = self.cursor_obj.fetchall()
+    def fields(self, min_field_count=min_field_count, max_field_count=max_field_count):
+        # Fetch column names and data types for the fields table from the schema
+        field_columns = self.schema.get('fields', {})
+        if field_columns:
+            column_names = ', '.join([col_name for col_name in field_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(field_columns) - 1))
 
-        for community in communities:
-            for i in range(random.randint(min_field_count, max_field_count)):
-                field_name = f"{community[1]}_field{i + 1}"
-                field_size = random.randint(min_field_size, max_field_size)
-                self.cursor_obj.execute(
-                    "INSERT INTO fields (name, size, measurement_id) VALUES \
-                    (%s, %s, %s)",
-                    (field_name, field_size, 4),
-                )
+            # List to store tuples for bulk insertion
+            fields_data = []
 
-        for community in communities:
-            community_name = community[1] + "%"
-            community_id = community[0]
-            self.cursor_obj.execute(
-                f"SELECT * FROM fields WHERE name LIKE '{community_name}'"
+            self.cursor_obj.execute("SELECT * FROM communities")
+            communities = self.cursor_obj.fetchall()
+
+            for community in communities:
+                for i in range(random.randint(min_field_count, max_field_count)):
+                    field_name = f"{community[1]}_field{i + 1}"
+                    field_size = random.randint(min_field_size, max_field_size)
+                    # Append tuple to fields_data list
+                    fields_data.append((field_size, 4, field_name, None, None))
+            # Perform bulk insertion
+            self.cursor_obj.executemany(
+                f"INSERT INTO fields ({column_names}) VALUES ({placeholders})",
+                fields_data
             )
-            fields = self.cursor_obj.fetchall()
-            for field in fields:
-                self.cursor_obj.execute(
-                    "INSERT INTO fields_communities (field_id, community_id) VALUES\
-                    (%s, %s)",
-                    (field[0], community_id),
+
+            # Fetch column names for the fields_communities table from the schema
+            fields_communities_columns = self.schema.get('fields_communities', {})
+            if fields_communities_columns:
+                fc_column_names = ', '.join([col_name for col_name in fields_communities_columns.keys() if col_name != 'id'])
+                fc_placeholders = ', '.join(['%s'] * (len(fields_communities_columns) - 1))
+
+                # List to store tuples for bulk insertion into fields_communities
+                fields_communities_data = []
+
+                for community in communities:
+                    community_name = community[1] + "%"
+                    community_id = community[0]
+                    self.cursor_obj.execute(
+                        f"SELECT * FROM fields WHERE name LIKE '{community_name}'"
+                    )
+                    fields = self.cursor_obj.fetchall()
+                    for field in fields:
+                        # Append tuple to fields_communities_data list
+                        fields_communities_data.append((field[0], community_id))
+
+                # Perform bulk insertion into fields_communities
+                self.cursor_obj.executemany(
+                    f"INSERT INTO fields_communities ({fc_column_names}) VALUES ({fc_placeholders})",
+                    fields_communities_data
                 )
 
     def insert_portable_devices(self):
-        for _, devices in portable_device_data.items():
-            for device_name in devices:
-                self.cursor_obj.execute(
-                    "INSERT INTO portable_devices (name) VALUES (%s)", (device_name,)
-                )
+        # Fetch column names and data types for the portable_devices table from the schema
+        portable_devices_columns = self.schema.get('portable_devices', {})
+        if portable_devices_columns:
+            column_names = ', '.join([col_name for col_name in portable_devices_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(portable_devices_columns) - 1))
+
+            # List to store tuples of values to insert
+            insertion_data = []
+
+            # Iterate over the portable device data and prepare insertion data
+            for _, devices in portable_device_data.items():
+                for device_name in devices:
+                    insertion_data.append((device_name,))
+
+            # Execute the insert query using executemany
+            self.cursor_obj.executemany(
+                f"INSERT INTO portable_devices ({column_names}) VALUES ({placeholders})",
+                insertion_data
+            )
 
     def insert_cultivations(self):
         self.cursor_obj.execute(
@@ -595,121 +779,153 @@ class DataMocking:
             )
 
     def insert_plantings(self, info_duration=duration):
-        self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
-        records = self.cursor_obj.fetchall()
-        used_records = {}
-        years_duration = tuple((i for i in range(1, info_duration + 1)))
-        for record in records:
-            field_id = record[2]
-            if field_id in used_records.keys():
-                if len(used_records[field_id]) >= info_duration:
-                    continue
-                elif len(used_records[field_id]) == 1:
-                    years_range = tuple(
-                        x for x in years_duration if x != used_records[field_id][0]
-                    )
-                    rand_year = random.choice(years_range)
-                    used_records[field_id].append(rand_year)
-                else:
-                    years_range = tuple(
-                        item
-                        for item in years_duration
-                        if item not in used_records[field_id]
-                    )
-                    rand_year = random.choice(years_range)
-                    used_records[field_id].append(rand_year)
-            else:
-                rand_year = random.choice(years_duration)
-                used_records[field_id] = [rand_year]
-            self.cursor_obj.execute(f"SELECT name FROM products WHERE id = {record[1]}")
-            product_name = self.cursor_obj.fetchone()[0]
+        # Fetch column names and data types for the plantings table from the schema
+        planting_columns = self.schema.get('plantings', {})
+        if planting_columns:
+            column_names = ', '.join([col_name for col_name in planting_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(planting_columns) - 1))
 
-            crop_info = self.get_crops_and_months_by_product_name(
-                products_armenia, product_name
-            )
+            self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
+            records = self.cursor_obj.fetchall()
+            used_records = {}
+            years_duration = tuple((i for i in range(1, info_duration + 1)))
 
-            if crop_info is None:
-                continue
-            min_crop_count, max_crop_count, min_month, max_month = crop_info
-            random_date_generated = self.random_date_within_months(
-                min_month, max_month, rand_year
-            )
-            record_id = record[0]
-            self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
-            field_size = self.cursor_obj.fetchone()[0]
-            workers_count = field_size // 10
-            if workers_count > 9:
-                workers_count -= random.randint(0, 3)
-            else:
-                workers_count += random.randint(0, 2)
-            crop_count = (
-                field_size * random.randint(min_crop_count, max_crop_count)
-            ) / 1000
-            self.cursor_obj.execute(
-                "INSERT INTO plantings (record_id, crop_quantity, date, workers_quantity) VALUES (%s, %s, %s, %s)",
-                (record_id, crop_count, random_date_generated, workers_count),
-            )
+            # Prepare a list to store all tuples to be inserted
+            insert_data = []
 
-    def insert_harvest(self):
-        self.cursor_obj.execute("SELECT record_id, crop_quantity, date FROM plantings")
-        plantings_data = self.cursor_obj.fetchall()
-        self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
-        records = self.cursor_obj.fetchall()
-        self.cursor_obj.execute(f"SELECT id, name FROM products")
-        products = self.cursor_obj.fetchall()
-        for planting in plantings_data:
-            planting_record_id = planting[0]
-            planting_date = planting[2]
             for record in records:
-                record_id = record[0]
-                if planting_record_id == record_id:
-                    record_product_id = record[1]
-                    for product in products:
-                        product_id = product[0]
-                        if record_product_id == product_id:
-                            product_name = product[1]
-                            (
-                                min_growth_duration,
-                                max_growth_duration,
-                                min_yield,
-                                max_yield,
-                            ) = self.get_growth_duration_and_min_max_yield_by_product_name(
-                                products_armenia, product_name
-                            )
-                            rand_day = random.randint(
-                                min_growth_duration, max_growth_duration
-                            )
-                            harvest_date = planting_date + datetime.timedelta(days=rand_day)
+                field_id = record[2]
+                if field_id in used_records.keys():
+                    if len(used_records[field_id]) >= info_duration:
+                        continue
+                    elif len(used_records[field_id]) == 1:
+                        years_range = tuple(
+                            x for x in years_duration if x != used_records[field_id][0]
+                        )
+                        rand_year = random.choice(years_range)
+                        used_records[field_id].append(rand_year)
+                    else:
+                        years_range = tuple(
+                            item
+                            for item in years_duration
+                            if item not in used_records[field_id]
+                        )
+                        rand_year = random.choice(years_range)
+                        used_records[field_id].append(rand_year)
+                else:
+                    rand_year = random.choice(years_duration)
+                    used_records[field_id] = [rand_year]
+                self.cursor_obj.execute(f"SELECT name FROM products WHERE id = {record[1]}")
+                product_name = self.cursor_obj.fetchone()[0]
 
-                            field_id = record[2]
-                            self.cursor_obj.execute(
-                                f"SELECT size FROM fields WHERE id = {field_id}"
-                            )
-                            field_size = self.cursor_obj.fetchone()[0]
-                            workers_count = field_size // 10
-                            if workers_count > 9:
-                                workers_count -= random.randint(0, 2)
-                            else:
-                                workers_count += random.randint(0, 2)
-                            product_yield = field_size * random.randint(
-                                min_yield, max_yield
-                            )
-                            planting_date = planting_date.strftime(
-                                "%Y-%m-%d %H:%M:%S.%f %z"
-                            )
-                            harvest_date = harvest_date.strftime(
-                                "%Y-%m-%d %H:%M:%S.%f %z"
-                            )
-                            self.cursor_obj.execute(
-                                "INSERT INTO harvests (record_id, yield, date, acres_cut, workers_quantity) VALUES (%s, %s, %s, %s, %s)",
+                crop_info = self.get_crops_and_months_by_product_name(
+                    products_armenia, product_name
+                )
+
+                if crop_info is None:
+                    continue
+                min_crop_count, max_crop_count, min_month, max_month = crop_info
+                random_date_generated = self.random_date_within_months(
+                    min_month, max_month, rand_year
+                )
+                record_id = record[0]
+                self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
+                field_size = self.cursor_obj.fetchone()[0]
+                workers_count = field_size // 10
+                if workers_count > 9:
+                    workers_count -= random.randint(0, 3)
+                else:
+                    workers_count += random.randint(0, 2)
+                crop_count = (
+                    field_size * random.randint(min_crop_count, max_crop_count)
+                ) / 1000
+
+                # Append the tuple to the list
+                insert_data.append((record_id, crop_count, random_date_generated, workers_count))
+            # Execute the insert query using executemany
+            self.cursor_obj.executemany(
+                f"INSERT INTO plantings ({column_names}) VALUES ({placeholders})",
+                insert_data
+            )
+
+    def insert_harvests(self):
+        # Fetch column names and data types for the harvests table from the schema
+        harvest_columns = self.schema.get('harvests', {})
+        if harvest_columns:
+            column_names = ', '.join([col_name for col_name in harvest_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(harvest_columns) - 1))
+
+            # Fetch data from the plantings, records, and products tables
+            self.cursor_obj.execute("SELECT record_id, crop_quantity, date FROM plantings")
+            plantings_data = self.cursor_obj.fetchall()
+
+            self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
+            records = self.cursor_obj.fetchall()
+
+            self.cursor_obj.execute("SELECT id, name FROM products")
+            products = self.cursor_obj.fetchall()
+
+            # Prepare a list to store all tuples to be inserted
+            insert_data = []
+
+            # Iterate over plantings data
+            for planting in plantings_data:
+                planting_record_id = planting[0]
+                planting_date = planting[2]
+                
+                # Find the corresponding record and product information
+                for record in records:
+                    record_id = record[0]
+                    if planting_record_id == record_id:
+                        record_product_id = record[1]
+                        
+                        for product in products:
+                            product_id = product[0]
+                            if record_product_id == product_id:
+                                product_name = product[1]
                                 (
-                                    record_id,
-                                    product_yield,
-                                    harvest_date,
-                                    field_size,
-                                    workers_count,
-                                ),
-                            )
+                                    min_growth_duration,
+                                    max_growth_duration,
+                                    min_yield,
+                                    max_yield,
+                                ) = self.get_growth_duration_and_min_max_yield_by_product_name(
+                                    products_armenia, product_name
+                                )
+                                rand_day = random.randint(
+                                    min_growth_duration, max_growth_duration
+                                )
+                                harvest_date = planting_date + datetime.timedelta(days=rand_day)
+
+                                field_id = record[2]
+                                self.cursor_obj.execute(
+                                    f"SELECT size FROM fields WHERE id = {field_id}"
+                                )
+                                field_size = self.cursor_obj.fetchone()[0]
+                                workers_count = field_size // 10
+                                if workers_count > 9:
+                                    workers_count -= random.randint(0, 2)
+                                else:
+                                    workers_count += random.randint(0, 2)
+                                product_yield = field_size * random.randint(
+                                    min_yield, max_yield
+                                )
+                                planting_date = planting_date.strftime(
+                                    "%Y-%m-%d %H:%M:%S.%f %z"
+                                )
+                                harvest_date = harvest_date.strftime(
+                                    "%Y-%m-%d %H:%M:%S.%f %z"
+                                )
+                                # Append the tuple to the list
+                                insert_data.append((record_id, product_yield, harvest_date, field_size, workers_count))
+
+            # Execute the insert query using executemany
+            print(f"harvests, {column_names}")
+            print(f"harvests, {placeholders}")
+            print(f"harvests, {insert_data}")
+            self.cursor_obj.executemany(
+                f"INSERT INTO harvests ({column_names}) VALUES ({placeholders})",
+                insert_data
+            )
 
     def get_growth_duration_and_min_max_yield_by_product_name(
         self, products, product_name
@@ -864,9 +1080,6 @@ class DataMocking:
                                         portable_device_quantity,
                                     ),
                                 )
-        con.commit()
-        self.cursor_obj.close()
-        con.close()
 
     def insert_table(self, table_name, **args):
         if table_name == "1":
@@ -913,13 +1126,13 @@ class DataMocking:
             self.insert_plantings()
             print("Plantings table inserted successfully")
         elif table_name == "12":
-            self.insert_harvest()
+            self.insert_harvests()
             print("Harvest table inserted successfully")
         elif table_name == "13":
             self.insert_planting_devices()
             print("Planting devices table inserted successfully")
         elif table_name == "14":
-            self.insert_harvest_devices()
+            self.insert_harvests_devices()
             print("Harvest devices table inserted successfully")
         elif table_name == "15":
             self.insert_expenses()
@@ -993,13 +1206,12 @@ class DataMocking:
                     table_names = input(
                         "Enter table numbers separated by space: "
                     ).split()
+                    table_names = [int(name) for name in table_names]
                     table_names.sort()
+                    table_names= [str(name) for name in table_names]
                     if table_count == table_names.__len__():
                         for table_name in table_names:
                             self.insert_table(table_name)
-                        con.commit()
-                        self.cursor_obj.close()
-                        con.close()
                     else:
                         print("Tble names much more than table count")
             elif yes.lower() == "y":
@@ -1008,4 +1220,8 @@ class DataMocking:
         elif change.lower() in ["y", "yes"]:
             for table_name in range(1, 22):
                 self.insert_table(str(table_name), **changes)
+        
+        con.commit()
+        self.cursor_obj.close()
+        con.close()
             
