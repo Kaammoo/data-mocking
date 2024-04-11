@@ -50,7 +50,7 @@ def get_input_device_count(portable_device_name, devices_weights):
     return input_device_count
 
 
-def get_crop_count(field_size,min_crop_count,max_crop_count):
+def get_crop_count(field_size,min_crop_count,max_crop_count, workers_count):
     if workers_count > 9:
         workers_count -= random.randint(0, 3)
     else:
