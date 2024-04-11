@@ -6,6 +6,7 @@ from Configs import *
 from Consts import *
 import datetime
 from time import time
+from Utilities import *
 
 
 class DataMocking:
@@ -13,37 +14,6 @@ class DataMocking:
         self.cursor_obj = con.cursor()
         self.fake = Faker()
         self.schema = fetch_schema()
-
-    def get_season(self, month):
-        if month in range(3, 6):
-            return "Spring"
-        elif month in range(6, 9):
-            return "Summer"
-        elif month in range(9, 12):
-            return "Autumn"
-        else:
-            return "Winter"
-
-    def get_crops_and_months_by_product_name(self, products, product_name):
-        for product in products:
-            if product[0] == product_name:
-                return product[2], product[3], product[4], product[5]
-        return None
-
-    def random_date_within_months(self, min_month, max_month, year):
-        date_year = datetime.datetime.now().year - year
-
-        month = random.randint(min_month, max_month)
-        day = random.randint(1, 28)
-        return datetime.datetime(date_year, month, day)
-
-    def get_growth_duration_and_min_max_yield_by_product_name(
-        self, products, product_name
-    ):
-        for product in products:
-            if product[0] == product_name:
-                return product[6], product[7], product[10], product[11]
-        return None
 
     def insert_users(self, min_users_per_communitys=min_users_per_community1, max_users_per_communitys=max_users_per_community1):
         # Fetch column names and data types for the users table from the schema
@@ -422,7 +392,7 @@ class DataMocking:
                     current_date = sowing_date
                     while current_date < corresponding_harvest_date:
                         month = current_date.month
-                        current_season = self.get_season(month)
+                        current_season = get_season(month)
                         if current_season == "Summer":
                             precipitation_types = ["rain", "without_prec"]
                             weights = [
@@ -818,14 +788,14 @@ class DataMocking:
                 self.cursor_obj.execute(f"SELECT name FROM products WHERE id = {record[1]}")
                 product_name = self.cursor_obj.fetchone()[0]
 
-                crop_info = self.get_crops_and_months_by_product_name(
+                crop_info = get_crops_and_months_by_product_name(
                     products_armenia, product_name
                 )
 
                 if crop_info is None:
                     continue
                 min_crop_count, max_crop_count, min_month, max_month = crop_info
-                random_date_generated = self.random_date_within_months(
+                random_date_generated = random_date_within_months(
                     min_month, max_month, rand_year
                 )
                 record_id = record[0]
@@ -888,7 +858,7 @@ class DataMocking:
                                     max_growth_duration,
                                     min_yield,
                                     max_yield,
-                                ) = self.get_growth_duration_and_min_max_yield_by_product_name(
+                                ) = get_growth_duration_and_min_max_yield_by_product_name(
                                     products_armenia, product_name
                                 )
                                 rand_day = random.randint(
@@ -920,20 +890,11 @@ class DataMocking:
 
             # Execute the insert query using executemany
             print(f"harvests, {column_names}")
-            print(f"harvests, {placeholders}")
-            print(f"harvests, {insert_data}")
             self.cursor_obj.executemany(
                 f"INSERT INTO harvests ({column_names}) VALUES ({placeholders})",
                 insert_data
             )
 
-    def get_growth_duration_and_min_max_yield_by_product_name(
-        self, products, product_name
-    ):
-        for product in products:
-            if product[0] == product_name:
-                return product[6], product[7], product[10], product[11]
-        return None
 
     def insert_cultivation_devices(self):
         self.cursor_obj.execute("SELECT id FROM cultivations")
