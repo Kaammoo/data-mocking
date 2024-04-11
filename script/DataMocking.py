@@ -688,6 +688,8 @@ class DataMocking:
                     avg_humidity,
                     avg_temp,
                     fertilizer_quantity,
+                    workers_quantity,
+                    other_factors,
                     irrigation_hours,
                     fertilizing_hours,
                     soil_compaction_hours
