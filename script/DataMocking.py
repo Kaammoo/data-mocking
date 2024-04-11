@@ -802,13 +802,7 @@ class DataMocking:
                 self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
                 field_size = self.cursor_obj.fetchone()[0]
                 workers_count = field_size // 10
-                if workers_count > 9:
-                    workers_count -= random.randint(0, 3)
-                else:
-                    workers_count += random.randint(0, 2)
-                crop_count = (
-                    field_size * random.randint(min_crop_count, max_crop_count)
-                ) / 1000
+                crop_count = get_crop_count(field_size, min_crop_count, max_crop_count)
 
                 # Append the tuple to the list
                 insert_data.append((record_id, crop_count, random_date_generated, workers_count))

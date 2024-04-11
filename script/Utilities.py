@@ -35,3 +35,12 @@ def get_growth_duration_and_min_max_yield_by_product_name(
     return None
 
 
+def get_crop_count(field_size,min_crop_count,max_crop_count):
+    if workers_count > 9:
+        workers_count -= random.randint(0, 3)
+    else:
+        workers_count += random.randint(0, 2)
+    crop_count = (
+        field_size * random.randint(min_crop_count, max_crop_count)
+    ) / 1000
+    return crop_count
