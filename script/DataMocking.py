@@ -688,6 +688,9 @@ class DataMocking:
                     avg_humidity,
                     avg_temp,
                     fertilizer_quantity,
+                    irrigation_hours,
+                    fertilizing_hours,
+                    soil_compaction_hours
                 ))
             self.cursor_obj.executemany(
             f"INSERT INTO cultivations ({column_names}) VALUES ({placeholders})",
