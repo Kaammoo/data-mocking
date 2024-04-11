@@ -700,6 +700,12 @@ products_armenia = (
         150,
     ),
 )
+expense_categories = [
+    ("fertilizer",),
+    ("equipment costs",),
+    ("seed purchase",),
+    ("employee expenses",),
+]
 measurements = [
     ("liter", "volume"),
     ("meter", "length"),
