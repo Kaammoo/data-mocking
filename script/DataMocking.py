@@ -444,32 +444,40 @@ class DataMocking:
             )
 
     def insert_measurement_units(self):
-        measurements = [
-            ("liter", "volume"),
-            ("meter", "length"),
-            ("Celsius", "temperature"),
-            ("g/m^3", "density"),
-        ]
-        for measurement in measurements:
-            self.cursor_obj.execute(
-                "INSERT INTO measurement_units (value, type) VALUES (%s,%s)",
-                (measurement[0], measurement[1]),
+        # Fetch column names and data types for the measurement_units table from the schema
+        measurement_columns = self.schema.get('measurement_units', {})
+        if measurement_columns:
+            column_names = ', '.join([col_name for col_name in measurement_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(measurement_columns) - 1))
+
+            measurement_data = [(value, type) for value, type in measurements]
+
+            # Insert measurement units into the measurement_units table
+            self.cursor_obj.executemany(
+                f"INSERT INTO measurement_units ({column_names}) VALUES ({placeholders})",
+                measurement_data
             )
 
     def insert_revenues(self):
-        self.cursor_obj.execute("SELECT id, yield, date FROM harvests")
-        harvests = self.cursor_obj.fetchall()
+        # Fetch column names and data types for the revenues table from the schema
+        revenue_columns = self.schema.get('revenues', {})
+        if revenue_columns:
+            column_names = ', '.join([col_name for col_name in revenue_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(revenue_columns) - 1))
 
-        for harvest_id, yield_amount, harvest_date in harvests:
-            amount = round(yield_amount * random.uniform(10, 50), 2)
-            revenue_date = harvest_date + datetime.timedelta(days=random.randint(5, 10))
+            self.cursor_obj.execute("SELECT id, yield, date FROM harvests")
+            harvests = self.cursor_obj.fetchall()
 
-            self.cursor_obj.execute(
-                """
-                INSERT INTO revenues (harvest_id, amount, date)
-                VALUES (%s, %s, %s)
-            """,
-                (harvest_id, amount, revenue_date),
+            revenue_data = []
+            for harvest_id, yield_amount, harvest_date in harvests:
+                amount = round(yield_amount * random.uniform(10, 50), 2)
+                revenue_date = harvest_date + datetime.timedelta(days=random.randint(5, 10))
+                revenue_data.append((harvest_id, amount, revenue_date))
+
+            # Insert revenues into the revenues table
+            self.cursor_obj.executemany(
+                f"INSERT INTO revenues ({column_names}) VALUES ({placeholders})",
+                revenue_data
             )
 
     def insert_precipitation_types(self):
@@ -583,107 +591,107 @@ class DataMocking:
             )
 
     def insert_cultivations(self):
-        self.cursor_obj.execute(
+        # Fetch column names and data types for the cultivations table from the schema
+        cultivation_columns = self.schema.get('cultivations', {})
+        if cultivation_columns:
+            column_names = ', '.join([col_name for col_name in cultivation_columns.keys() if col_name != 'id'])
+            placeholders = ', '.join(['%s'] * (len(cultivation_columns) - 1))
+
+            self.cursor_obj.execute(
+                """
+                SELECT p.date, h.date, p.record_id 
+                FROM plantings p 
+                INNER JOIN harvests h ON p.record_id = h.record_id
             """
-            SELECT p.date, h.date, p.record_id 
-            FROM plantings p 
-            INNER JOIN harvests h ON p.record_id = h.record_id
-        """
-        )
-        sowing_harvest_record_dates = self.cursor_obj.fetchall()
-        for sowing_date, harvest_date, record_id in sowing_harvest_record_dates:
-            start_date = (
-                sowing_date + datetime.timedelta(days=random.randint(1, 2))
-            ).strftime("%Y-%m-%d %H:%M:%S.%f %z")
-            end_date = (
-                harvest_date - datetime.timedelta(days=random.randint(1, 2))
-            ).strftime("%Y-%m-%d %H:%M:%S.%f %z")
-            self.cursor_obj.execute(
-                """
-                SELECT community_id 
-                FROM records 
-                WHERE id = %s
-            """,
-                (record_id,),
             )
-            community_id = self.cursor_obj.fetchone()[0]
-            query = f"""
-                SELECT AVG(humidity), AVG(temperature) 
-                FROM weather_metrics 
-                WHERE community_id = {community_id} AND date BETWEEN '{start_date}' AND '{end_date}'
-            """
-            self.cursor_obj.execute(query)
-            avg_humidity, avg_temp = self.cursor_obj.fetchone()
-            self.cursor_obj.execute(
+            sowing_harvest_record_dates = self.cursor_obj.fetchall()
+
+            cultivation_data = []
+            for sowing_date, harvest_date, record_id in sowing_harvest_record_dates:
+                start_date = (
+                    sowing_date + datetime.timedelta(days=random.randint(1, 2))
+                ).strftime("%Y-%m-%d %H:%M:%S.%f %z")
+                end_date = (
+                    harvest_date - datetime.timedelta(days=random.randint(1, 2))
+                ).strftime("%Y-%m-%d %H:%M:%S.%f %z")
+                self.cursor_obj.execute(
+                    """
+                    SELECT community_id 
+                    FROM records 
+                    WHERE id = %s
+                """,
+                    (record_id,),
+                )
+                community_id = self.cursor_obj.fetchone()[0]
+                query = f"""
+                    SELECT AVG(humidity), AVG(temperature) 
+                    FROM weather_metrics 
+                    WHERE community_id = {community_id} AND date BETWEEN '{start_date}' AND '{end_date}'
                 """
-                SELECT AVG(rain_drop)
-                FROM weather_metrics
-                WHERE community_id = %s AND date BETWEEN %s AND %s
-            """,
-                (community_id, start_date, end_date),
-            )
-            water_amount = self.cursor_obj.fetchone()[0]
+                self.cursor_obj.execute(query)
+                avg_humidity, avg_temp = self.cursor_obj.fetchone()
+                self.cursor_obj.execute(
+                    """
+                    SELECT AVG(rain_drop)
+                    FROM weather_metrics
+                    WHERE community_id = %s AND date BETWEEN %s AND %s
+                """,
+                    (community_id, start_date, end_date),
+                )
+                water_amount = self.cursor_obj.fetchone()[0]
 
-            self.cursor_obj.execute(
-                """
-                SELECT AVG(workers_quantity)
-                FROM plantings
-                WHERE record_id = %s
-            """,
-                (record_id,),
-            )
-            workers_quantity = self.cursor_obj.fetchone()[0]
+                self.cursor_obj.execute(
+                    """
+                    SELECT AVG(workers_quantity)
+                    FROM plantings
+                    WHERE record_id = %s
+                """,
+                    (record_id,),
+                )
+                workers_quantity = self.cursor_obj.fetchone()[0]
 
-            avg_humidity = round(avg_humidity, 2)
-            avg_temp = round(avg_temp, 2)
-            if water_amount is not None:
-                water_amount = round(water_amount, 2)
-            else:
-                water_amount = 0
+                avg_humidity = round(avg_humidity, 2)
+                avg_temp = round(avg_temp, 2)
+                if water_amount is not None:
+                    water_amount = round(water_amount, 2)
+                else:
+                    water_amount = 0
 
-            self.cursor_obj.execute(
-                """
-                SELECT p.name
-                FROM records r
-                JOIN products p ON r.product_id = p.id
-                WHERE r.id = %s
-            """,
-                (record_id,),
-            )
-            product_name = self.cursor_obj.fetchone()[0]
+                self.cursor_obj.execute(
+                    """
+                    SELECT p.name
+                    FROM records r
+                    JOIN products p ON r.product_id = p.id
+                    WHERE r.id = %s
+                """,
+                    (record_id,),
+                )
+                product_name = self.cursor_obj.fetchone()[0]
 
-            other_factors = round(random.uniform(0.1, 0.49), 2)
-            for product in products_armenia:
-                if product[0] == product_name:
-                    min_count_fertilizer = product[12]
-                    max_count_fertilizer = product[13]
-                    fertilizer_quantity = round(
-                        random.randint(min_count_fertilizer, max_count_fertilizer)
-                    )
-                    break
-            irrigation_hours = random.randint(18, 25)
-            fertilizing_hours = random.randint(18, 25)
-            soil_compaction_hours = random.randint(18, 25)
-
-            self.cursor_obj.execute(
-                """
-                INSERT INTO cultivations (record_id, start_date, end_date, avg_humidity, avg_temperature, fertilizer_quantity, water_amount, workers_quantity, other_factors, irrigation_hours, fertilizing_hours, soil_compaction_hours)
-                VALUES (%s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s, %s)
-            """,
-                (
+                other_factors = round(random.uniform(0.1, 0.49), 2)
+                for product in products_armenia:
+                    if product[0] == product_name:
+                        min_count_fertilizer = product[12]
+                        max_count_fertilizer = product[13]
+                        fertilizer_quantity = round(
+                            random.randint(min_count_fertilizer, max_count_fertilizer)
+                        )
+                        break
+                irrigation_hours = random.randint(18, 25)
+                fertilizing_hours = random.randint(18, 25)
+                soil_compaction_hours = random.randint(18, 25)
+                
+                cultivation_data.append((
                     record_id,
                     start_date,
                     end_date,
                     avg_humidity,
                     avg_temp,
                     fertilizer_quantity,
-                    water_amount,
-                    workers_quantity,
-                    other_factors,
-                    irrigation_hours,
-                    fertilizing_hours,
-                    soil_compaction_hours,
-                ),
+                ))
+            self.cursor_obj.executemany(
+            f"INSERT INTO cultivations ({column_names}) VALUES ({placeholders})",
+            cultivation_data
             )
 
     def insert_plantings(self, info_duration=duration):

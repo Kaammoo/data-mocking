@@ -700,3 +700,9 @@ products_armenia = (
         150,
     ),
 )
+measurements = [
+    ("liter", "volume"),
+    ("meter", "length"),
+    ("Celsius", "temperature"),
+    ("g/m^3", "density"),
+]
