@@ -49,8 +49,6 @@ class DataMocking:
                     users_data.append((name, email, phone_number, None))
 
             # Insert all users into the users table
-            print(f"users, {users_data = }")
-            print(f"users, {placeholders = }")
             print(f"users, {column_names = }")
             self.cursor_obj.executemany(
                 f"INSERT INTO users ({column_names}) VALUES ({placeholders}) RETURNING id",
@@ -146,7 +144,8 @@ class DataMocking:
                     )
 
                     category_id = random.randint(1, 4)
-                    amount = random.randint(100, 1000)
+                    amount = get_amount(category_id)
+                    
 
                     # Append the tuple to the list
                     insert_data.append((record_id, category_id, amount, expense_date))
@@ -900,26 +899,7 @@ class DataMocking:
             for portable_device_community in portable_devices_communities:
                 portable_device_community_id = portable_device_community[0]
                 portable_device_community_quantity = portable_device_community[1]
-                if 8 > portable_device_community_quantity > 3:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 3
-                    )
-                elif 12 > portable_device_community_quantity > 7:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 4
-                    )
-                elif 25 > portable_device_community_quantity > 11:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 6
-                    )
-                elif portable_device_community_quantity > 24:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity // 10
-                    )
-                else:
-                    insert_quantity = random.randint(
-                        0, portable_device_community_quantity
-                    )
+                insert_quantity = get_insert_quantity(portable_device_community_quantity)
                 if insert_quantity > 0:
                     self.cursor_obj.execute(
                         "INSERT INTO cultivation_devices (cultivation_id, portable_devices_communities_id, quantity) VALUES (%s, %s, %s)",
@@ -1113,29 +1093,6 @@ class DataMocking:
         else:
             print(f"Table number {table_name} is not recognized.")
 
-    def tables(self):
-        print("1: Users")
-        print("2: Measurement units")
-        print("3: Fields")
-        print("4: Precipitation types")
-        print("5: Product types")
-        print("6: Products")
-        print("7: Records")
-        print("8: Expense categories")
-        print("9: Portable devices")
-        print("10: Portable devices communities")
-        print("11: Plantings")
-        print("12: Harvest")
-        print("13: Planting devices")
-        print("14: Harvest devices")
-        print("15: Expenses")
-        print("16: Revenues")
-        print("17: Weather metrics")
-        print("18: Cultivations")
-        print("19: Calculate yields")
-        print("20: Cultivation devices")
-        print("21: Devices calendars")
-
     def run(self):
         change = input("Do you need to change anything? (y/yes or n/no): ")
         changes = {}
@@ -1157,7 +1114,7 @@ class DataMocking:
                     print(
                         "Please specify the tables to insert: Press table numbers which you woth to insert splite its with space:"
                     )
-                    self.tables()
+                    tables()
                     table_names = input(
                         "Enter table numbers separated by space: "
                     ).split()

@@ -44,3 +44,56 @@ def get_crop_count(field_size,min_crop_count,max_crop_count):
         field_size * random.randint(min_crop_count, max_crop_count)
     ) / 1000
     return crop_count
+
+
+def get_insert_quantity(portable_device_community_quantity):
+    if 8 > portable_device_community_quantity > 3:
+        insert_quantity = random.randint(
+            0, portable_device_community_quantity // 3
+        )
+    elif 12 > portable_device_community_quantity > 7:
+        insert_quantity = random.randint(
+            0, portable_device_community_quantity // 4
+        )
+    elif 25 > portable_device_community_quantity > 11:
+        insert_quantity = random.randint(
+            0, portable_device_community_quantity // 6
+        )
+    elif portable_device_community_quantity > 24:
+        insert_quantity = random.randint(
+            0, portable_device_community_quantity // 10
+        )
+    else:
+        insert_quantity = random.randint(
+            0, portable_device_community_quantity
+        )
+    return insert_quantity
+
+
+def tables():
+    print("1: Users")
+    print("2: Measurement units")
+    print("3: Fields")
+    print("4: Precipitation types")
+    print("5: Product types")
+    print("6: Products")
+    print("7: Records")
+    print("8: Expense categories")
+    print("9: Portable devices")
+    print("10: Portable devices communities")
+    print("11: Plantings")
+    print("12: Harvest")
+    print("13: Planting devices")
+    print("14: Harvest devices")
+    print("15: Expenses")
+    print("16: Revenues")
+    print("17: Weather metrics")
+    print("18: Cultivations")
+    print("19: Calculate yields")
+    print("20: Cultivation devices")
+    print("21: Devices calendars")
+    
+def get_amount(category_id):
+    amount = random.randint(100, 1000)
+    return amount
+
