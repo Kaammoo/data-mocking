@@ -112,3 +112,65 @@ def get_amount(category_id):
     amount = random.randint(100, 1000)
     return amount
 
+def get_change_count(products_armenia,product_name,avg_fertilizer_quantity,avg_temp):
+    change = 0
+    for product in products_armenia:
+        product_ith_name = product[0]
+        min_fertilizer_quantity = product[12]
+        max_fertilizer_quantity = product[13]
+        min_temp_that_product_need = product[8]
+        max_temp_that_product_need = product[8]
+        if product_ith_name == product_name:
+            
+            if (
+                avg_fertilizer_quantity - min_fertilizer_quantity
+                > avg_fertilizer_quantity - max_fertilizer_quantity
+            ):
+                change -= 0.1
+            else:
+                change -= 0.3
+            if avg_temp - min_temp_that_product_need > avg_temp - max_temp_that_product_need:
+                change += 0.3
+            elif avg_temp - min_temp_that_product_need < avg_temp - max_temp_that_product_need:
+                change += 0.1
+            break
+    return change
+
+def get_wether_date(current_season, month):
+    if current_season == "Summer":
+        precipitation_types = ["rain", "without_prec"]
+        weights = [
+            0.3,
+            0.7,
+        ]  # Adjust the weights according to your preference
+        temp_range = (15, 30)
+        humidity_range = (30, 80)
+    elif current_season == "Winter":
+        precipitation_types = ["snow", "hail", "without_prec"]
+        weights = [
+            0.2,
+            0.1,
+            0.7,
+        ]  # Adjust the weights according to your preference
+        temp_range = (-10, 5)
+        humidity_range = (20, 70)
+    elif current_season == "Spring" or month == 9 or month == 10:
+        precipitation_types = ["rain", "hail", "without_prec"]
+        weights = [
+            0.4,
+            0.01,
+            0.59,
+        ]  # Adjust the weights according to your preference
+        temp_range = (10, 20)
+        humidity_range = (20, 60)
+    else:
+        precipitation_types = ["rain", "snow", "hail", "without_prec"]
+        weights = [
+            0.20,
+            0.30,
+            0.1,
+            0.4,
+        ]  # Adjust the weights according to your preference
+        temp_range = (0, 15)
+        humidity_range = (40, 70)
+    return precipitation_types, weights, temp_range, humidity_range

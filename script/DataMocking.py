@@ -315,22 +315,7 @@ class DataMocking:
             )
             old_yield = self.cursor_obj.fetchone()[0]
 
-            change = 0
-            for product in products_armenia:
-                if product[0] == product_name:
-                    
-                    if (
-                        avg_fertilizer_quantity - product[12]
-                        > avg_fertilizer_quantity - product[13]
-                    ):
-                        change -= 0.1
-                    else:
-                        change -= 0.3
-                    if avg_temp - product[8] > avg_temp - product[9]:
-                        change += 0.3
-                    elif avg_temp - product[8] < avg_temp - product[9]:
-                        change += 0.1
-                    break
+            change = get_change_count(products_armenia,product_name,avg_fertilizer_quantity,avg_temp)
 
             change += other_factors
 
@@ -382,43 +367,7 @@ class DataMocking:
                     while current_date < corresponding_harvest_date:
                         month = current_date.month
                         current_season = get_season(month)
-                        if current_season == "Summer":
-                            precipitation_types = ["rain", "without_prec"]
-                            weights = [
-                                0.3,
-                                0.7,
-                            ]  # Adjust the weights according to your preference
-                            temp_range = (15, 30)
-                            humidity_range = (30, 80)
-                        elif current_season == "Winter":
-                            precipitation_types = ["snow", "hail", "without_prec"]
-                            weights = [
-                                0.2,
-                                0.1,
-                                0.7,
-                            ]  # Adjust the weights according to your preference
-                            temp_range = (-10, 5)
-                            humidity_range = (20, 70)
-                        elif current_season == "Spring" or month == 9 or month == 10:
-                            precipitation_types = ["rain", "hail", "without_prec"]
-                            weights = [
-                                0.4,
-                                0.01,
-                                0.59,
-                            ]  # Adjust the weights according to your preference
-                            temp_range = (10, 20)
-                            humidity_range = (20, 60)
-                        else:
-                            precipitation_types = ["rain", "snow", "hail", "without_prec"]
-                            weights = [
-                                0.20,
-                                0.30,
-                                0.1,
-                                0.4,
-                            ]  # Adjust the weights according to your preference
-                            temp_range = (0, 15)
-                            humidity_range = (40, 70)
-
+                        precipitation_types, weights, temp_range, humidity_range = get_wether_date()
                         prec_type = random.choices(precipitation_types, weights=weights)[0]
                         humidity = random.randint(*humidity_range)
                         temperature = random.randint(*temp_range)
