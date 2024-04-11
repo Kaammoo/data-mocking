@@ -181,17 +181,7 @@ class DataMocking:
                 for portable_device in portable_devices:
                     portable_device_id = portable_device[0]
                     portable_device_name = portable_device[1]
-                    if (
-                        portable_device_name == "Shovel"
-                        or portable_device_name == "Rake"
-                        or portable_device_name == "Spade"
-                        or portable_device_name == "Hoe"
-                    ):
-                        input_device_count = random.randint(*devices_weights["hand tool"])
-                    elif "Tractor" in portable_device_name or "Combine" in portable_device_name:
-                        input_device_count = random.randint(*devices_weights["Tractor or Combine"])
-                    else:
-                        input_device_count = random.randint(*devices_weights["Truck"])
+                    input_device_count = get_input_device_count(portable_device_name, devices_weights)
                     if input_device_count > 0:
                         # Append tuple of values for each insertion
                         insertion_data.append((portable_device_id, community_id, input_device_count))

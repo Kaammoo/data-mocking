@@ -34,6 +34,21 @@ def get_growth_duration_and_min_max_yield_by_product_name(
             return product[6], product[7], product[10], product[11]
     return None
 
+def get_input_device_count(portable_device_name, devices_weights):
+    if (
+        portable_device_name == "Shovel"
+        or portable_device_name == "Rake"
+        or portable_device_name == "Spade"
+        or portable_device_name == "Hoe"
+    ):
+        input_device_count = random.randint(*devices_weights["hand tool"])
+    elif "Tractor" in portable_device_name or "Combine" in portable_device_name:
+        input_device_count = random.randint(*devices_weights["Tractor or Combine"])
+    else:
+        input_device_count = random.randint(*devices_weights["Truck"])
+        
+    return input_device_count
+
 
 def get_crop_count(field_size,min_crop_count,max_crop_count):
     if workers_count > 9:
