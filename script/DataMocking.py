@@ -15,12 +15,18 @@ class DataMocking:
         self.fake = Faker()
         self.schema = fetch_schema()
 
-    def insert_users(self, min_users_per_communitys=min_users_per_community1, max_users_per_communitys=max_users_per_community1):
+    def insert_users(
+        self,
+        min_users_per_communitys=min_users_per_community1,
+        max_users_per_communitys=max_users_per_community1,
+    ):
         # Fetch column names and data types for the users table from the schema
-        user_columns = self.schema.get('users', {})
+        user_columns = self.schema.get("users", {})
         if user_columns:
-            column_names = ', '.join([col_name for col_name in user_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(user_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in user_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(user_columns) - 1))
 
             # Provide default values if parameters are None
             min_users_per_community = int(min_users_per_communitys)
@@ -34,14 +40,21 @@ class DataMocking:
 
             # Insert users into the users table
             for community_name in community_names:
-                weight = community_weights.get(community_name, 0.5)  # Default weight is 0.5 if not found
-                adjusted_users = round(((max_users_per_community - min_users_per_community) * weight) + min_users_per_community)
+                weight = community_weights.get(
+                    community_name, 0.5
+                )  # Default weight is 0.5 if not found
+                adjusted_users = round(
+                    ((max_users_per_community - min_users_per_community) * weight)
+                    + min_users_per_community
+                )
 
                 for _ in range(adjusted_users):
                     name = self.fake.name()
                     unique_id = str(random.randint(1, 500))
                     email = self.fake.email() + f"_{unique_id}"
-                    code = random.choice(["94", "98", "93", "33", "91", "99", "55", "95"])
+                    code = random.choice(
+                        ["94", "98", "93", "33", "91", "99", "55", "95"]
+                    )
                     phone_number = "+374" + code + self.fake.numerify("#######")
 
                     # Make sure the number of values matches the number of placeholders
@@ -50,7 +63,7 @@ class DataMocking:
             # Insert all users into the users table
             self.cursor_obj.executemany(
                 f"INSERT INTO users ({column_names}) VALUES ({placeholders}) RETURNING id",
-                users_data
+                users_data,
             )
 
             # Fetch all user IDs after inserting them
@@ -58,30 +71,41 @@ class DataMocking:
             user_ids = self.cursor_obj.fetchall()
 
             # Establish relationships between users and communities in the users_communities table
-            users_communities_columns = self.schema.get('users_communities', {})
+            users_communities_columns = self.schema.get("users_communities", {})
             if users_communities_columns:
-                column_names = ', '.join([col_name for col_name in users_communities_columns.keys() if col_name != 'id'])
-                placeholders = ', '.join(['%s'] * (len(users_communities_columns) - 1))
+                column_names = ", ".join(
+                    [
+                        col_name
+                        for col_name in users_communities_columns.keys()
+                        if col_name != "id"
+                    ]
+                )
+                placeholders = ", ".join(["%s"] * (len(users_communities_columns) - 1))
             users_communities_data = []
             for community_name in community_names:
                 community_id = community_names.index(community_name) + 1
-                community_user_ids = random.sample(user_ids, k=round(len(user_ids) * community_weights.get(community_name, 0.5)))
-                for user_id, in community_user_ids:
+                community_user_ids = random.sample(
+                    user_ids,
+                    k=round(len(user_ids) * community_weights.get(community_name, 0.5)),
+                )
+                for (user_id,) in community_user_ids:
                     users_communities_data.append((user_id, community_id))
 
             # Insert user-community relationships using executemany
             if users_communities_data:
                 self.cursor_obj.executemany(
                     f"INSERT INTO users_communities ({column_names}) VALUES ({placeholders})",
-                    users_communities_data
+                    users_communities_data,
                 )
 
     def insert_records(self):
         # Fetch column names and data types for the records table from the schema
-        record_columns = self.schema.get('records', {})
+        record_columns = self.schema.get("records", {})
         if record_columns:
-            column_names = ', '.join([col_name for col_name in record_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(record_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in record_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(record_columns) - 1))
 
             # List to store tuples for bulk insertion
             records_data = []
@@ -90,7 +114,7 @@ class DataMocking:
             communities = self.cursor_obj.fetchall()
             self.cursor_obj.execute("SELECT * FROM products")
             products = self.cursor_obj.fetchall()
-            
+
             for community in communities:
                 community_name = community[1] + "%"
                 community_id = community[0]
@@ -106,15 +130,17 @@ class DataMocking:
             # Perform bulk insertion
             self.cursor_obj.executemany(
                 f"INSERT INTO records ({column_names}) VALUES ({placeholders})",
-                records_data
+                records_data,
             )
 
     def insert_expenses(self):
         # Fetch column names and data types for the expenses table from the schema
-        expenses_columns = self.schema.get('expenses', {})
+        expenses_columns = self.schema.get("expenses", {})
         if expenses_columns:
-            column_names = ', '.join([col_name for col_name in expenses_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(expenses_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in expenses_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(expenses_columns) - 1))
 
             self.cursor_obj.execute(
                 """
@@ -142,7 +168,6 @@ class DataMocking:
 
                     category_id = random.randint(1, 4)
                     amount = get_amount(category_id)
-                    
 
                     # Append the tuple to the list
                     insert_data.append((record_id, category_id, amount, expense_date))
@@ -153,15 +178,17 @@ class DataMocking:
                 INSERT INTO expenses ({column_names})
                 VALUES ({placeholders})
                 """,
-                insert_data
+                insert_data,
             )
 
     def insert_portable_devices_communities(self):
         # Fetch column names and data types for the portable_devices_communities table from the schema
-        pdc_columns = self.schema.get('portable_devices_communities', {})
+        pdc_columns = self.schema.get("portable_devices_communities", {})
         if pdc_columns:
-            column_names = ', '.join([col_name for col_name in pdc_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(pdc_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in pdc_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(pdc_columns) - 1))
 
             # Fetch communities and portable devices from the database
             self.cursor_obj.execute("SELECT id FROM communities")
@@ -177,28 +204,40 @@ class DataMocking:
                 for portable_device in portable_devices:
                     portable_device_id = portable_device[0]
                     portable_device_name = portable_device[1]
-                    input_device_count = get_input_device_count(portable_device_name, devices_weights)
+                    input_device_count = get_input_device_count(
+                        portable_device_name, devices_weights
+                    )
                     if input_device_count > 0:
                         # Append tuple of values for each insertion
-                        insertion_data.append((portable_device_id, community_id, input_device_count))
+                        insertion_data.append(
+                            (portable_device_id, community_id, input_device_count)
+                        )
 
             # Execute the insert query using executemany
             self.cursor_obj.executemany(
                 f"INSERT INTO portable_devices_communities ({column_names}) VALUES ({placeholders})",
-                insertion_data
+                insertion_data,
             )
 
     def insert_planting_devices(self):
         # Fetch column names and data types for the planting_devices table from the schema
-        planting_devices_columns = self.schema.get('planting_devices', {})
+        planting_devices_columns = self.schema.get("planting_devices", {})
         if planting_devices_columns:
-            column_names = ', '.join([col_name for col_name in planting_devices_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(planting_devices_columns) - 1))
+            column_names = ", ".join(
+                [
+                    col_name
+                    for col_name in planting_devices_columns.keys()
+                    if col_name != "id"
+                ]
+            )
+            placeholders = ", ".join(["%s"] * (len(planting_devices_columns) - 1))
 
             # Fetch planting and portable device community data
             self.cursor_obj.execute("SELECT id FROM plantings")
             plantings = self.cursor_obj.fetchall()
-            self.cursor_obj.execute("SELECT id, quantity FROM portable_devices_communities")
+            self.cursor_obj.execute(
+                "SELECT id, quantity FROM portable_devices_communities"
+            )
             portable_devices_communities = self.cursor_obj.fetchall()
 
             # List to store tuples of values to insert
@@ -219,25 +258,35 @@ class DataMocking:
                             0, portable_device_community_quantity
                         )
                     if insert_quantity > 0:
-                        insertion_data.append((planting_id, portable_device_community_id, insert_quantity))
+                        insertion_data.append(
+                            (planting_id, portable_device_community_id, insert_quantity)
+                        )
 
             # Execute the insert query using executemany
             self.cursor_obj.executemany(
                 f"INSERT INTO planting_devices ({column_names}) VALUES ({placeholders})",
-                insertion_data
+                insertion_data,
             )
 
     def insert_harvests_devices(self):
         # Fetch column names and data types for the harvest_devices table from the schema
-        harvest_devices_columns = self.schema.get('harvest_devices', {})
+        harvest_devices_columns = self.schema.get("harvest_devices", {})
         if harvest_devices_columns:
-            column_names = ', '.join([col_name for col_name in harvest_devices_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(harvest_devices_columns) - 1))
+            column_names = ", ".join(
+                [
+                    col_name
+                    for col_name in harvest_devices_columns.keys()
+                    if col_name != "id"
+                ]
+            )
+            placeholders = ", ".join(["%s"] * (len(harvest_devices_columns) - 1))
 
             # Fetch harvests and portable device community data
             self.cursor_obj.execute("SELECT id FROM harvests")
             harvests = self.cursor_obj.fetchall()
-            self.cursor_obj.execute("SELECT id, quantity FROM portable_devices_communities")
+            self.cursor_obj.execute(
+                "SELECT id, quantity FROM portable_devices_communities"
+            )
             portable_devices_communities = self.cursor_obj.fetchall()
 
             # List to store tuples of values to insert
@@ -258,12 +307,14 @@ class DataMocking:
                             0, portable_device_community_quantity
                         )
                     if insert_quantity > 0:
-                        insertion_data.append((harvest_id, portable_device_community_id, insert_quantity))
+                        insertion_data.append(
+                            (harvest_id, portable_device_community_id, insert_quantity)
+                        )
 
             # Execute the insert query using executemany
             self.cursor_obj.executemany(
                 f"INSERT INTO harvest_devices ({column_names}) VALUES ({placeholders})",
-                insertion_data
+                insertion_data,
             )
 
     def calculate_yields(self):
@@ -305,7 +356,9 @@ class DataMocking:
             )
             old_yield = self.cursor_obj.fetchone()[0]
 
-            change = get_change_count(products_armenia,product_name,avg_fertilizer_quantity,avg_temp)
+            change = get_change_count(
+                products_armenia, product_name, avg_fertilizer_quantity, avg_temp
+            )
 
             change += other_factors
 
@@ -322,10 +375,12 @@ class DataMocking:
 
     def insert_weather_metrics(self):
         # Fetch column names and data types for the weather_metrics table from the schema
-        weather_columns = self.schema.get('weather_metrics', {})
+        weather_columns = self.schema.get("weather_metrics", {})
         if weather_columns:
-            column_names = ', '.join([col_name for col_name in weather_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(weather_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in weather_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(weather_columns) - 1))
 
             self.cursor_obj.execute(
                 """
@@ -342,6 +397,13 @@ class DataMocking:
             """
             )
             harvest_dates = self.cursor_obj.fetchall()
+            self.cursor_obj.execute(
+                """
+                SELECT * 
+                FROM prec_types
+            """
+            )
+            prec_types = self.cursor_obj.fetchall()
 
             # Prepare data for executemany
             weather_data = []
@@ -357,23 +419,30 @@ class DataMocking:
                     while current_date < corresponding_harvest_date:
                         month = current_date.month
                         current_season = get_season(month)
-                        precipitation_types, weights, temp_range, humidity_range = get_wether_date()
-                        prec_type = random.choices(precipitation_types, weights=weights)[0]
+                        precipitation_types, weights, temp_range, humidity_range = (
+                            get_wether_date(current_season, month)
+                        )
+                        prec_type = random.choices(
+                            precipitation_types, weights=weights
+                        )[0]
                         humidity = random.randint(*humidity_range)
                         temperature = random.randint(*temp_range)
+
                         if prec_type == "rain":
                             rain_drop = random.randint(10, 100)
                         else:
                             rain_drop = None
                         if prec_type is not None:
-                            weather_data.append((
-                                community_id,
-                                rain_drop,
-                                humidity,
-                                temperature,
-                                prec_type,
-                                current_date,
-                            ))
+                            weather_data.append(
+                                (
+                                    community_id,
+                                    rain_drop,
+                                    humidity,
+                                    temperature,
+                                    prec_type,
+                                    current_date,
+                                )
+                            )
 
                         current_date += datetime.timedelta(days=1)
 
@@ -384,32 +453,45 @@ class DataMocking:
                     INSERT INTO weather_metrics ({column_names})
                     VALUES ({placeholders})
                     """,
-                    weather_data
+                    weather_data,
                 )
 
     def insert_product_types(self):
         # Fetch column names and data types for the product_types table from the schema
-        product_type_columns = self.schema.get('product_types', {})
+        product_type_columns = self.schema.get("product_types", {})
         if product_type_columns:
-            column_names = ', '.join([col_name for col_name in product_type_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(product_type_columns) - 1))
+            column_names = ", ".join(
+                [
+                    col_name
+                    for col_name in product_type_columns.keys()
+                    if col_name != "id"
+                ]
+            )
+            placeholders = ", ".join(["%s"] * (len(product_type_columns) - 1))
 
             product_type_data = [("vegetables",), ("cereal",)]
             for product_type in product_type_data:
-                self.cursor_obj.execute(f"INSERT INTO product_types ({column_names}) VALUES ({placeholders})", product_type)
+                self.cursor_obj.execute(
+                    f"INSERT INTO product_types ({column_names}) VALUES ({placeholders})",
+                    product_type,
+                )
 
     def insert_products(self):
         # Fetch column names and data types for the products table from the schema
-        product_columns = self.schema.get('products', {})
+        product_columns = self.schema.get("products", {})
         if product_columns:
-            column_names = ', '.join([col_name for col_name in product_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(product_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in product_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(product_columns) - 1))
 
             self.cursor_obj.execute(
                 "SELECT id FROM product_types WHERE type = 'vegetables'"
             )
             vegetable_id = self.cursor_obj.fetchone()[0]  # Fetching only the ID
-            self.cursor_obj.execute("SELECT id FROM product_types WHERE type = 'cereal'")
+            self.cursor_obj.execute(
+                "SELECT id FROM product_types WHERE type = 'cereal'"
+            )
             cereal_id = self.cursor_obj.fetchone()[0]  # Fetching only the ID
 
             # List to store tuples of values to insert
@@ -427,30 +509,38 @@ class DataMocking:
             # Execute the insert query using executemany
             self.cursor_obj.executemany(
                 f"INSERT INTO products ({column_names}) VALUES ({placeholders})",
-                insertion_data
+                insertion_data,
             )
 
     def insert_measurement_units(self):
         # Fetch column names and data types for the measurement_units table from the schema
-        measurement_columns = self.schema.get('measurement_units', {})
+        measurement_columns = self.schema.get("measurement_units", {})
         if measurement_columns:
-            column_names = ', '.join([col_name for col_name in measurement_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(measurement_columns) - 1))
+            column_names = ", ".join(
+                [
+                    col_name
+                    for col_name in measurement_columns.keys()
+                    if col_name != "id"
+                ]
+            )
+            placeholders = ", ".join(["%s"] * (len(measurement_columns) - 1))
 
             measurement_data = [(value, type) for value, type in measurements]
 
             # Insert measurement units into the measurement_units table
             self.cursor_obj.executemany(
                 f"INSERT INTO measurement_units ({column_names}) VALUES ({placeholders})",
-                measurement_data
+                measurement_data,
             )
 
     def insert_revenues(self):
         # Fetch column names and data types for the revenues table from the schema
-        revenue_columns = self.schema.get('revenues', {})
+        revenue_columns = self.schema.get("revenues", {})
         if revenue_columns:
-            column_names = ', '.join([col_name for col_name in revenue_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(revenue_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in revenue_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(revenue_columns) - 1))
 
             self.cursor_obj.execute("SELECT id, yield, date FROM harvests")
             harvests = self.cursor_obj.fetchall()
@@ -458,21 +548,25 @@ class DataMocking:
             revenue_data = []
             for harvest_id, yield_amount, harvest_date in harvests:
                 amount = round(yield_amount * random.uniform(10, 50), 2)
-                revenue_date = harvest_date + datetime.timedelta(days=random.randint(5, 10))
+                revenue_date = harvest_date + datetime.timedelta(
+                    days=random.randint(5, 10)
+                )
                 revenue_data.append((harvest_id, amount, revenue_date))
 
             # Insert revenues into the revenues table
             self.cursor_obj.executemany(
                 f"INSERT INTO revenues ({column_names}) VALUES ({placeholders})",
-                revenue_data
+                revenue_data,
             )
 
     def insert_precipitation_types(self):
         # Fetch column names and data types for the prec_types table from the schema
-        prec_types_columns = self.schema.get('prec_types', {})
+        prec_types_columns = self.schema.get("prec_types", {})
         if prec_types_columns:
-            column_names = ', '.join([col_name for col_name in prec_types_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(prec_types_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in prec_types_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(prec_types_columns) - 1))
 
             # Define the precipitation types to insert
             precipitation_types = [("rain",), ("snow",), ("hail",), ("without_prec",)]
@@ -480,28 +574,36 @@ class DataMocking:
             # Execute the insert query using executemany
             self.cursor_obj.executemany(
                 f"INSERT INTO prec_types ({column_names}) VALUES ({placeholders})",
-                precipitation_types
+                precipitation_types,
             )
 
     def insert_expense_categories(self):
         # Fetch column names and data types for the expense_categories table from the schema
-        expense_categories_columns = self.schema.get('expense_categories', {})
+        expense_categories_columns = self.schema.get("expense_categories", {})
         if expense_categories_columns:
-            column_names = ', '.join([col_name for col_name in expense_categories_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(expense_categories_columns) - 1))
-            
+            column_names = ", ".join(
+                [
+                    col_name
+                    for col_name in expense_categories_columns.keys()
+                    if col_name != "id"
+                ]
+            )
+            placeholders = ", ".join(["%s"] * (len(expense_categories_columns) - 1))
+
             # Execute the insert query using executemany
             self.cursor_obj.executemany(
                 f"INSERT INTO expense_categories ({column_names}) VALUES ({placeholders})",
-                expense_categories
+                expense_categories,
             )
 
     def fields(self, min_field_count=min_field_count, max_field_count=max_field_count):
         # Fetch column names and data types for the fields table from the schema
-        field_columns = self.schema.get('fields', {})
+        field_columns = self.schema.get("fields", {})
         if field_columns:
-            column_names = ', '.join([col_name for col_name in field_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(field_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in field_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(field_columns) - 1))
 
             # List to store tuples for bulk insertion
             fields_data = []
@@ -518,14 +620,22 @@ class DataMocking:
             # Perform bulk insertion
             self.cursor_obj.executemany(
                 f"INSERT INTO fields ({column_names}) VALUES ({placeholders})",
-                fields_data
+                fields_data,
             )
 
             # Fetch column names for the fields_communities table from the schema
-            fields_communities_columns = self.schema.get('fields_communities', {})
+            fields_communities_columns = self.schema.get("fields_communities", {})
             if fields_communities_columns:
-                fc_column_names = ', '.join([col_name for col_name in fields_communities_columns.keys() if col_name != 'id'])
-                fc_placeholders = ', '.join(['%s'] * (len(fields_communities_columns) - 1))
+                fc_column_names = ", ".join(
+                    [
+                        col_name
+                        for col_name in fields_communities_columns.keys()
+                        if col_name != "id"
+                    ]
+                )
+                fc_placeholders = ", ".join(
+                    ["%s"] * (len(fields_communities_columns) - 1)
+                )
 
                 # List to store tuples for bulk insertion into fields_communities
                 fields_communities_data = []
@@ -544,15 +654,21 @@ class DataMocking:
                 # Perform bulk insertion into fields_communities
                 self.cursor_obj.executemany(
                     f"INSERT INTO fields_communities ({fc_column_names}) VALUES ({fc_placeholders})",
-                    fields_communities_data
+                    fields_communities_data,
                 )
 
     def insert_portable_devices(self):
         # Fetch column names and data types for the portable_devices table from the schema
-        portable_devices_columns = self.schema.get('portable_devices', {})
+        portable_devices_columns = self.schema.get("portable_devices", {})
         if portable_devices_columns:
-            column_names = ', '.join([col_name for col_name in portable_devices_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(portable_devices_columns) - 1))
+            column_names = ", ".join(
+                [
+                    col_name
+                    for col_name in portable_devices_columns.keys()
+                    if col_name != "id"
+                ]
+            )
+            placeholders = ", ".join(["%s"] * (len(portable_devices_columns) - 1))
 
             # List to store tuples of values to insert
             insertion_data = []
@@ -565,15 +681,21 @@ class DataMocking:
             # Execute the insert query using executemany
             self.cursor_obj.executemany(
                 f"INSERT INTO portable_devices ({column_names}) VALUES ({placeholders})",
-                insertion_data
+                insertion_data,
             )
 
     def insert_cultivations(self):
         # Fetch column names and data types for the cultivations table from the schema
-        cultivation_columns = self.schema.get('cultivations', {})
+        cultivation_columns = self.schema.get("cultivations", {})
         if cultivation_columns:
-            column_names = ', '.join([col_name for col_name in cultivation_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(cultivation_columns) - 1))
+            column_names = ", ".join(
+                [
+                    col_name
+                    for col_name in cultivation_columns.keys()
+                    if col_name != "id"
+                ]
+            )
+            placeholders = ", ".join(["%s"] * (len(cultivation_columns) - 1))
 
             self.cursor_obj.execute(
                 """
@@ -658,32 +780,36 @@ class DataMocking:
                 irrigation_hours = random.randint(18, 25)
                 fertilizing_hours = random.randint(18, 25)
                 soil_compaction_hours = random.randint(18, 25)
-                
-                cultivation_data.append((
-                    record_id,
-                    start_date,
-                    end_date,
-                    avg_humidity,
-                    avg_temp,
-                    fertilizer_quantity,
-                    water_amount,
-                    workers_quantity,
-                    other_factors,
-                    irrigation_hours,
-                    fertilizing_hours,
-                    soil_compaction_hours
-                ))
+
+                cultivation_data.append(
+                    (
+                        record_id,
+                        start_date,
+                        end_date,
+                        avg_humidity,
+                        avg_temp,
+                        fertilizer_quantity,
+                        water_amount,
+                        workers_quantity,
+                        other_factors,
+                        irrigation_hours,
+                        fertilizing_hours,
+                        soil_compaction_hours,
+                    )
+                )
             self.cursor_obj.executemany(
-            f"INSERT INTO cultivations ({column_names}) VALUES ({placeholders})",
-            cultivation_data
+                f"INSERT INTO cultivations ({column_names}) VALUES ({placeholders})",
+                cultivation_data,
             )
 
     def insert_plantings(self, info_duration=duration):
         # Fetch column names and data types for the plantings table from the schema
-        planting_columns = self.schema.get('plantings', {})
+        planting_columns = self.schema.get("plantings", {})
         if planting_columns:
-            column_names = ', '.join([col_name for col_name in planting_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(planting_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in planting_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(planting_columns) - 1))
 
             self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
             records = self.cursor_obj.fetchall()
@@ -715,7 +841,9 @@ class DataMocking:
                 else:
                     rand_year = random.choice(years_duration)
                     used_records[field_id] = [rand_year]
-                self.cursor_obj.execute(f"SELECT name FROM products WHERE id = {record[1]}")
+                self.cursor_obj.execute(
+                    f"SELECT name FROM products WHERE id = {record[1]}"
+                )
                 product_name = self.cursor_obj.fetchone()[0]
 
                 crop_info = get_crops_and_months_by_product_name(
@@ -729,28 +857,38 @@ class DataMocking:
                     min_month, max_month, rand_year
                 )
                 record_id = record[0]
-                self.cursor_obj.execute(f"SELECT size FROM fields WHERE id = {field_id}")
+                self.cursor_obj.execute(
+                    f"SELECT size FROM fields WHERE id = {field_id}"
+                )
                 field_size = self.cursor_obj.fetchone()[0]
                 workers_count = field_size // 10
-                crop_count = get_crop_count(field_size, min_crop_count, max_crop_count, workers_count)
+                crop_count = get_crop_count(
+                    field_size, min_crop_count, max_crop_count, workers_count
+                )
 
                 # Append the tuple to the list
-                insert_data.append((record_id, crop_count, random_date_generated, workers_count))
+                insert_data.append(
+                    (record_id, crop_count, random_date_generated, workers_count)
+                )
             # Execute the insert query using executemany
             self.cursor_obj.executemany(
                 f"INSERT INTO plantings ({column_names}) VALUES ({placeholders})",
-                insert_data
+                insert_data,
             )
 
     def insert_harvests(self):
         # Fetch column names and data types for the harvests table from the schema
-        harvest_columns = self.schema.get('harvests', {})
+        harvest_columns = self.schema.get("harvests", {})
         if harvest_columns:
-            column_names = ', '.join([col_name for col_name in harvest_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(harvest_columns) - 1))
+            column_names = ", ".join(
+                [col_name for col_name in harvest_columns.keys() if col_name != "id"]
+            )
+            placeholders = ", ".join(["%s"] * (len(harvest_columns) - 1))
 
             # Fetch data from the plantings, records, and products tables
-            self.cursor_obj.execute("SELECT record_id, crop_quantity, date FROM plantings")
+            self.cursor_obj.execute(
+                "SELECT record_id, crop_quantity, date FROM plantings"
+            )
             plantings_data = self.cursor_obj.fetchall()
 
             self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
@@ -766,13 +904,13 @@ class DataMocking:
             for planting in plantings_data:
                 planting_record_id = planting[0]
                 planting_date = planting[2]
-                
+
                 # Find the corresponding record and product information
                 for record in records:
                     record_id = record[0]
                     if planting_record_id == record_id:
                         record_product_id = record[1]
-                        
+
                         for product in products:
                             product_id = product[0]
                             if record_product_id == product_id:
@@ -788,7 +926,9 @@ class DataMocking:
                                 rand_day = random.randint(
                                     min_growth_duration, max_growth_duration
                                 )
-                                harvest_date = planting_date + datetime.timedelta(days=rand_day)
+                                harvest_date = planting_date + datetime.timedelta(
+                                    days=rand_day
+                                )
 
                                 field_id = record[2]
                                 self.cursor_obj.execute(
@@ -810,25 +950,41 @@ class DataMocking:
                                     "%Y-%m-%d %H:%M:%S.%f %z"
                                 )
                                 # Append the tuple to the list
-                                insert_data.append((record_id, product_yield, harvest_date, field_size, workers_count))
+                                insert_data.append(
+                                    (
+                                        record_id,
+                                        product_yield,
+                                        harvest_date,
+                                        field_size,
+                                        workers_count,
+                                    )
+                                )
 
             # Execute the insert query using executemany
             self.cursor_obj.executemany(
                 f"INSERT INTO harvests ({column_names}) VALUES ({placeholders})",
-                insert_data
+                insert_data,
             )
 
     def insert_cultivation_devices(self):
         # Fetch column names and data types for the cultivation_devices table from the schema
-        cultivation_devices_columns = self.schema.get('cultivation_devices', {})
+        cultivation_devices_columns = self.schema.get("cultivation_devices", {})
         if cultivation_devices_columns:
-            column_names = ', '.join([col_name for col_name in cultivation_devices_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(cultivation_devices_columns) - 1))
+            column_names = ", ".join(
+                [
+                    col_name
+                    for col_name in cultivation_devices_columns.keys()
+                    if col_name != "id"
+                ]
+            )
+            placeholders = ", ".join(["%s"] * (len(cultivation_devices_columns) - 1))
 
             # Fetch cultivations and portable devices communities
             self.cursor_obj.execute("SELECT id FROM cultivations")
             cultivations = self.cursor_obj.fetchall()
-            self.cursor_obj.execute("SELECT id, quantity FROM portable_devices_communities")
+            self.cursor_obj.execute(
+                "SELECT id, quantity FROM portable_devices_communities"
+            )
             portable_devices_communities = self.cursor_obj.fetchall()
 
             cultivation_devices_data = []
@@ -838,27 +994,37 @@ class DataMocking:
                 for portable_device_community in portable_devices_communities:
                     portable_device_community_id = portable_device_community[0]
                     portable_device_community_quantity = portable_device_community[1]
-                    insert_quantity = get_insert_quantity(portable_device_community_quantity)
+                    insert_quantity = get_insert_quantity(
+                        portable_device_community_quantity
+                    )
                     if insert_quantity > 0:
-                        cultivation_devices_data.append((
-                            cultivation_id,
-                            portable_device_community_id,
-                            insert_quantity
-                        ))
+                        cultivation_devices_data.append(
+                            (
+                                cultivation_id,
+                                portable_device_community_id,
+                                insert_quantity,
+                            )
+                        )
 
             # Insert cultivation devices into the cultivation_devices table using executemany
             if cultivation_devices_data:
                 self.cursor_obj.executemany(
                     f"INSERT INTO cultivation_devices ({column_names}) VALUES ({placeholders})",
-                    cultivation_devices_data
+                    cultivation_devices_data,
                 )
 
     def insert_devices_calendars(self):
         # Fetch column names and data types for the devices_calendars table from the schema
-        devices_calendars_columns = self.schema.get('devices_calendars', {})
+        devices_calendars_columns = self.schema.get("devices_calendars", {})
         if devices_calendars_columns:
-            column_names = ', '.join([col_name for col_name in devices_calendars_columns.keys() if col_name != 'id'])
-            placeholders = ', '.join(['%s'] * (len(devices_calendars_columns) - 1))
+            column_names = ", ".join(
+                [
+                    col_name
+                    for col_name in devices_calendars_columns.keys()
+                    if col_name != "id"
+                ]
+            )
+            placeholders = ", ".join(["%s"] * (len(devices_calendars_columns) - 1))
             # Fetch records, cultivations, harvests, and plantings data
             self.cursor_obj.execute("SELECT id, field_id FROM records")
             records = self.cursor_obj.fetchall()
@@ -881,7 +1047,10 @@ class DataMocking:
                             f"SELECT portable_devices_communities_id, quantity FROM planting_devices WHERE planting_id = {planting_id}"
                         )
                         planting_devices = self.cursor_obj.fetchall()
-                        for portable_device_community_id, portable_device_quantity in planting_devices:
+                        for (
+                            portable_device_community_id,
+                            portable_device_quantity,
+                        ) in planting_devices:
                             planning_end_date = (
                                 planting_start_date
                                 + datetime.timedelta(days=random.randint(-2, 2))
@@ -899,7 +1068,12 @@ class DataMocking:
             # Process cultivations data
             cultivation_data = []
             for cultivation in cultivations:
-                cultivation_record_id, cultivation_start_date, cultivation_end_date, cultivation_id = cultivation
+                (
+                    cultivation_record_id,
+                    cultivation_start_date,
+                    cultivation_end_date,
+                    cultivation_id,
+                ) = cultivation
                 for record in records:
                     record_id, record_field_id = record
                     if record_id == cultivation_record_id:
@@ -910,7 +1084,10 @@ class DataMocking:
                         planning_end_date = cultivation_end_date + datetime.timedelta(
                             days=random.randint(-2, 2)
                         )
-                        for portable_devices_communities_id, portable_device_quantity in cultivation_devices:
+                        for (
+                            portable_devices_communities_id,
+                            portable_device_quantity,
+                        ) in cultivation_devices:
                             cultivation_data.append(
                                 (
                                     cultivation_start_date,
@@ -932,7 +1109,10 @@ class DataMocking:
                             f"SELECT portable_devices_communities_id, quantity FROM harvest_devices WHERE harvest_id = {harvest_id}"
                         )
                         harvest_devices = self.cursor_obj.fetchall()
-                        for portable_devices_communities_id, portable_device_quantity in harvest_devices:
+                        for (
+                            portable_devices_communities_id,
+                            portable_device_quantity,
+                        ) in harvest_devices:
                             planning_end_date = harvest_date + datetime.timedelta(
                                 days=random.randint(-2, 2)
                             )
@@ -964,9 +1144,11 @@ class DataMocking:
             elif "max_users_per_community" in args:
                 self.insert_users(args["max_users_per_community"])
                 print("Users table inserted successfully")
-            elif "max_users_per_community" in args and "min_users_per_community" in args:
-                self.insert_users(args["max_users_per_community"])
-                print("Users table inserted successfully") 
+            elif (
+                "max_users_per_community" in args and "min_users_per_community" in args
+            ):
+                self.insert_users(args["min_users_per_community"],args["max_users_per_community"])
+                print("Users table inserted successfully")
             else:
                 self.insert_users()
                 print("Users table inserted successfully")
@@ -1038,7 +1220,9 @@ class DataMocking:
         changes = {}
         if change.lower() in ["y", "yes"]:
             while True:
-                change_input = input("Enter the change you want to make (key=new_value), or enter 'done' to finish: ")
+                change_input = input(
+                    "Enter the change you want to make (key=new_value), or enter 'done' to finish: "
+                )
                 if change_input.lower() == "done":
                     break
                 else:
@@ -1060,7 +1244,7 @@ class DataMocking:
                     ).split()
                     table_names = [int(name) for name in table_names]
                     table_names.sort()
-                    table_names= [str(name) for name in table_names]
+                    table_names = [str(name) for name in table_names]
                     if table_count == table_names.__len__():
                         for table_name in table_names:
                             self.insert_table(table_name)
@@ -1072,8 +1256,7 @@ class DataMocking:
         elif change.lower() in ["y", "yes"]:
             for table_name in range(1, 22):
                 self.insert_table(str(table_name), **changes)
-        
+
         con.commit()
         self.cursor_obj.close()
         con.close()
-            
