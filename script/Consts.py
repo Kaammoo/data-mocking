@@ -90,6 +90,11 @@ portable_device_data = {
 # products_armenia[7] -> How many day need that product grow up(max day)
 # products_armenia[8] -> Min Celsus that be good for that product grow up
 # products_armenia[9] -> Max Celsus that be good for that product grow up
+# products_armenia[10] -> Min yeild count
+# products_armenia[11] -> Max yeild count
+# products_armenia[12] -> Min fertilizer quantity
+# products_armenia[13] -> Max fertilizer quantity
+
 products_armenia = (
     (
         "Russet Potato",
