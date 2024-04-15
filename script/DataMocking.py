@@ -397,12 +397,9 @@ class DataMocking:
             """
             )
             harvest_dates = self.cursor_obj.fetchall()
-            self.cursor_obj.execute(
-                """
-                SELECT * 
-                FROM prec_types
-            """
-            )
+
+            # Fetch all precipitation types and their IDs from the database
+            self.cursor_obj.execute("SELECT * FROM prec_types")
             prec_types = self.cursor_obj.fetchall()
 
             # Prepare data for executemany
@@ -419,27 +416,34 @@ class DataMocking:
                     while current_date < corresponding_harvest_date:
                         month = current_date.month
                         current_season = get_season(month)
-                        precipitation_types, weights, temp_range, humidity_range = (
-                            get_wether_date(current_season, month)
-                        )
-                        prec_type = random.choices(
+                        precipitation_types, weights, temp_range, humidity_range = get_wether_date(current_season, month)
+                        prec_type_name = random.choices(
                             precipitation_types, weights=weights
                         )[0]
+
+                        # Find the ID of the precipitation type
+                        prec_type_id = None
+                        for row in prec_types:
+                            if row[1] == prec_type_name:
+                                prec_type_id = row[0]
+                                break
+
                         humidity = random.randint(*humidity_range)
                         temperature = random.randint(*temp_range)
 
-                        if prec_type == "rain":
+                        if prec_type_name == "rain":
                             rain_drop = random.randint(10, 100)
                         else:
                             rain_drop = None
-                        if prec_type is not None:
+
+                        if prec_type_id is not None:
                             weather_data.append(
                                 (
                                     community_id,
                                     rain_drop,
                                     humidity,
                                     temperature,
-                                    prec_type,
+                                    prec_type_id,
                                     current_date,
                                 )
                             )
@@ -455,6 +459,7 @@ class DataMocking:
                     """,
                     weather_data,
                 )
+
 
     def insert_product_types(self):
         # Fetch column names and data types for the product_types table from the schema
