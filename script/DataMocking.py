@@ -219,6 +219,10 @@ class DataMocking:
                 insertion_data,
             )
 
+    def get_table_data_lenght(self, table_name, limit=10):
+        self.cursor_obj.execute(f"SELECT COUNT(id) FROM {table_name} LIMIT {limit}")
+        return self.cursor_obj.fetchone()[0]
+
     def insert_planting_devices(self):
         # Fetch column names and data types for the planting_devices table from the schema
         planting_devices_columns = self.schema.get("planting_devices", {})
@@ -614,8 +618,8 @@ class DataMocking:
 
             self.cursor_obj.execute("SELECT * FROM communities")
             communities = self.cursor_obj.fetchall()
-            self.cursor_obj.execute("SELECT id FROM measurement_units WHERE value LIKE square kilometres")
-            measurement_unit_id = self.cursor_obj.fetcone()[0]
+            self.cursor_obj.execute("SELECT id FROM measurement_units WHERE value LIKE %s", ("square kilometres",))
+            measurement_unit_id = self.cursor_obj.fetchone()[0]
             for community in communities:
                 for i in range(random.randint(min_field_count, max_field_count)):
                     field_name = f"{community[1]}_field{i + 1}"
@@ -1141,8 +1145,8 @@ class DataMocking:
                     planting_data + cultivation_data + harvest_data,
                 )
 
-    def insert_table(self, table_name, **args):
-        if table_name == "1":
+    def insert_module(self, module_name, **args):
+        if module_name == "1":
             if "min_users_per_community" in args:
                 self.insert_users(args["min_users_per_community"])
                 print("Users table inserted successfully")
@@ -1157,74 +1161,42 @@ class DataMocking:
             else:
                 self.insert_users()
                 print("Users table inserted successfully")
-        elif table_name == "2":
-            self.insert_measurement_units()
-            print("Measurement units table inserted successfully")
-        elif table_name == "3":
-            self.fields()
-            print("Fields table inserted successfully")
-        elif table_name == "4":
-            self.insert_precipitation_types()
-            print("Precipitation types table inserted successfully")
-        elif table_name == "5":
-            self.insert_product_types()
-            print("Product types table inserted successfully")
-        elif table_name == "6":
-            self.insert_products()
-            print("Products table inserted successfully")
-        elif table_name == "7":
-            self.insert_records()
-            print("Records table inserted successfully")
-        elif table_name == "8":
-            self.insert_expense_categories()
-            print("Expense categories table inserted successfully")
-        elif table_name == "9":
-            self.insert_portable_devices()
-            print("Portable devices table inserted successfully")
-        elif table_name == "10":
-            self.insert_portable_devices_communities()
-            print("Portable devices communities table inserted successfully")
-        elif table_name == "11":
-            self.insert_plantings()
-            print("Plantings table inserted successfully")
-        elif table_name == "12":
-            self.insert_harvests()
-            print("Harvest table inserted successfully")
-        elif table_name == "13":
-            self.insert_planting_devices()
-            print("Planting devices table inserted successfully")
-        elif table_name == "14":
-            self.insert_harvests_devices()
-            print("Harvest devices table inserted successfully")
-        elif table_name == "15":
-            self.insert_expenses()
-            print("Expenses table inserted successfully")
-        elif table_name == "16":
-            self.insert_revenues()
-            print("Revenues table inserted successfully")
-        elif table_name == "17":
-            self.insert_weather_metrics()
-            print("Weather metrics table inserted successfully")
-        elif table_name == "18":
-            self.insert_cultivations()
-            print("Cultivations table inserted successfully")
-        elif table_name == "19":
-            self.calculate_yields()
-            print("Yields calculated successfully")
-        elif table_name == "20":
-            self.insert_cultivation_devices()
-            print("Cultivation devices table inserted successfully")
-        elif table_name == "21":
-            self.insert_devices_calendars()
-            print("Devices calendars table inserted successfully")
+        elif module_name == "2":
+            if self.get_table_data_lenght("measurement_units", limit=7) < 6:
+                self.insert_measurement_units()
+                print("Measurement units table inserted successfully")
+            else:
+                print("Measurement units had been inserted before this run.")
+            if self.get_table_data_lenght("fields", limit=1) > 0:
+                print("Fields units had been inserted before this run.")
+            else:
+                self.insert_fields()
+                print("Fields units table inserted successfully")
+        elif module_name == "3":
+            if self.get_table_data_lenght("product_types", limit=1) > 0:
+                print("Product types had been inserted before this run.")
+            else:
+                self.insert_product_types()
+                print("Product types units table inserted successfully")
+
+            if self.get_table_data_lenght("products", limit=1) > 0:
+                print("Products had been inserted before this run.")
+            else:
+                self.insert_products()
+                print("Products table inserted successfully")
+
+        elif module_name == "4":
+            pass
         else:
-            print(f"Table number {table_name} is not recognized.")
+            print(f"Table number {module_name} is not recognized.")
 
     def run(self):
         change = input("Do you need to change anything? (y/yes or n/no): ")
         changes = {}
         if change.lower() in ["y", "yes"]:
             while True:
+                config_arguments = read_file("script/Configs.py")
+                print(config_arguments, "\nThese are our arguments:")
                 change_input = input(
                     "Enter the change you want to make (key=new_value), or enter 'done' to finish: "
                 )
@@ -1244,23 +1216,23 @@ class DataMocking:
                         "Please specify the tables to insert: Press table numbers which you woth to insert splite its with space:"
                     )
                     tables()
-                    table_names = input(
+                    module_names = input(
                         "Enter table numbers separated by space: "
                     ).split()
-                    table_names = [int(name) for name in table_names]
-                    table_names.sort()
-                    table_names = [str(name) for name in table_names]
-                    if table_count == table_names.__len__():
-                        for table_name in table_names:
-                            self.insert_table(table_name)
+                    module_names = [int(name) for name in module_names]
+                    module_names.sort()
+                    module_names = [str(name) for name in module_names]
+                    if table_count == module_names.__len__():
+                        for module_name in module_names:
+                            self.insert_module(module_name)
                     else:
                         print("Tble names much more than table count")
             elif yes.lower() == "y":
-                for table_name in range(1, 22):
-                    self.insert_table(str(table_name))
+                for module_name in range(1, 22):
+                    self.insert_module(str(module_name))
         elif change.lower() in ["y", "yes"]:
-            for table_name in range(1, 22):
-                self.insert_table(str(table_name), **changes)
+            for module_name in range(1, 22):
+                self.insert_module(str(module_name), **changes)
 
         con.commit()
         self.cursor_obj.close()
