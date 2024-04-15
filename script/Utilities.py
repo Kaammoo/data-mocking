@@ -10,14 +10,12 @@ def get_season( month):
         return "Autumn"
     else:
         return "Winter"
-    
-    
+
 def get_crops_and_months_by_product_name( products, product_name):
     for product in products:
         if product[0] == product_name:
             return product[2], product[3], product[4], product[5]
     return None
-
 
 def random_date_within_months( min_month, max_month, year):
     date_year = datetime.datetime.now().year - year
@@ -49,7 +47,6 @@ def get_input_device_count(portable_device_name, devices_weights):
         
     return input_device_count
 
-
 def get_crop_count(field_size,min_crop_count,max_crop_count, workers_count):
     if workers_count > 9:
         workers_count -= random.randint(0, 3)
@@ -59,7 +56,6 @@ def get_crop_count(field_size,min_crop_count,max_crop_count, workers_count):
         field_size * random.randint(min_crop_count, max_crop_count)
     ) / 1000
     return crop_count
-
 
 def get_insert_quantity(portable_device_community_quantity):
     if 8 > portable_device_community_quantity > 3:
@@ -84,30 +80,22 @@ def get_insert_quantity(portable_device_community_quantity):
         )
     return insert_quantity
 
-
 def tables():
-    print("1: Users")
-    print("2: Measurement units")
-    print("3: Fields")
-    print("4: Precipitation types")
-    print("5: Product types")
-    print("6: Products")
-    print("7: Records")
-    print("8: Expense categories")
-    print("9: Portable devices")
-    print("10: Portable devices communities")
-    print("11: Plantings")
-    print("12: Harvest")
-    print("13: Planting devices")
-    print("14: Harvest devices")
-    print("15: Expenses")
-    print("16: Revenues")
-    print("17: Weather metrics")
-    print("18: Cultivations")
-    print("19: Calculate yields")
-    print("20: Cultivation devices")
-    print("21: Devices calendars")
-    
+    print("""
+    1: Users/Communities
+    2: Fields/Measurement Units
+    3: Product/Types
+    4: Records/Product
+    5: Portable Devices/Communities
+    6: Plantings/Records
+    7: Harvests/Plantings
+    8: Expenses/Expenses Category/Record
+    9: Revenues/Harvests
+    10: Weather Metrics/Harvests
+    11: Cultivations/Weather Metrics
+    """)
+
+
 def get_amount(category_id):
     amount = random.randint(100, 1000)
     return amount
@@ -174,3 +162,13 @@ def get_wether_date(current_season, month):
         temp_range = (0, 15)
         humidity_range = (40, 70)
     return precipitation_types, weights, temp_range, humidity_range
+
+def read_file(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            file_contents = file.read()
+            return file_contents
+    except FileNotFoundError:
+        print("File not found.")
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
