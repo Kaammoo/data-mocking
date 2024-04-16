@@ -1,6 +1,7 @@
 import datetime
 import random
 
+
 def get_season( month):
     if month in range(3, 6):
         return "Spring"
@@ -167,8 +168,17 @@ def read_file(file_path):
     try:
         with open(file_path, 'r') as file:
             file_contents = file.read()
+            print(type(file_contents))
             return file_contents
     except FileNotFoundError:
         print("File not found.")
     except Exception as e:
         print(f"Error occurred: {str(e)}")
+        
+def read_config(file_path):
+    config = {}
+
+    with open(file_path, 'r') as file:
+        exec(file.read(), config)
+
+    return config

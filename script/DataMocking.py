@@ -7,6 +7,7 @@ from Consts import *
 import datetime
 from time import time
 from Utilities import *
+from ConfigHandler import handle_config_changes
 
 
 class DataMocking:
@@ -1192,49 +1193,17 @@ class DataMocking:
 
     def run(self):
         change = input("Do you need to change anything in configs? (y/yes or n/no): ")
-        changes = {}
+
         if change.lower() in ["y", "yes"]:
-            while True:
-                #change this before commited
-                config_arguments = read_file("script/Configs.py")
-                print(config_arguments, "\nThese are our arguments:")
-                change_input = input(
-                    "Enter the change you want to make (key=new_value), or enter 'done' to finish: "
-                )
-                if change_input.lower() == "done":
-                    break
-                else:
-                    key, value = change_input.split("=")
-                    changes[key] = value
+            changes, models = handle_config_changes()
+            models = [str(i) for i in range(1, 12)]
+            for model in models:
+                self.insert_model(model, **changes)
+            
+        else:
+            models = [str(i) for i in range(1, 12)]
+            for model in models:
+                self.insert_model(model)
 
-        if change.lower() in ["n", "no"]:
-            yes = input("If you need to run all tables, press 'y'. If not, press 'n': ")
 
-            if yes.lower() == "n":
-                table_count = int(input("How many tables do you need to insert: "))
-                if table_count >= 1:
-                    print(
-                        "Please specify the tables to insert: Press table numbers which you woth to insert splite its with space:"
-                    )
-                    tables()
-                    model_names = input(
-                        "Enter table numbers separated by space: "
-                    ).split()
-                    model_names = [int(name) for name in model_names]
-                    model_names.sort()
-                    model_names = [str(name) for name in model_names]
-                    if table_count == model_names.__len__():
-                        for model_name in model_names:
-                            self.insert_model(model_name)
-                    else:
-                        print("Tble names much more than table count")
-            elif yes.lower() == "y":
-                for model_name in range(1, 22):
-                    self.insert_model(str(model_name))
-        elif change.lower() in ["y", "yes"]:
-            for model_name in range(1, 22):
-                self.insert_model(str(model_name), **changes)
-
-        con.commit()
-        self.cursor_obj.close()
-        con.close()
+        print("Models to be inserted:", models)
