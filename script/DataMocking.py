@@ -17,8 +17,8 @@ class DataMocking:
 
     def insert_users(
         self,
-        min_users_per_communitys=min_users_per_community1,
-        max_users_per_communitys=max_users_per_community1,
+        min_users_per_communitys=None,
+        max_users_per_communitys=None,
     ):
         # Fetch column names and data types for the users table from the schema
         user_columns = self.schema.get("users", {})
@@ -1145,46 +1145,46 @@ class DataMocking:
                     planting_data + cultivation_data + harvest_data,
                 )
 
+    def model_fields(self):
+        if self.get_table_data_lenght("measurement_units", limit=7) < 6:
+            self.insert_measurement_units()
+            print("Measurement units table inserted successfully")
+        else:
+            print("Measurement units had been inserted before this run.")
+        if self.get_table_data_lenght("fields", limit=1) > 0:
+            print("Fields units had been inserted before this run.")
+        else:
+            self.insert_fields()
+            print("Fields units table inserted successfully")
+    
+    
+    def model_products(self):
+        if self.get_table_data_lenght("product_types", limit=1) > 0:
+            print("Product types had been inserted before this run.")
+        else:
+            self.insert_product_types()
+            print("Product types units table inserted successfully")
+
+        if self.get_table_data_lenght("products", limit=1) > 0:
+            print("Products had been inserted before this run.")
+        else:
+            self.insert_products()
+            print("Products table inserted successfully")
+        
+    def model_users(self, **args):
+        self.insert_users(
+            args.get("min_users_per_community", min_users_per_community1),
+            args.get("max_users_per_community", max_users_per_community1)
+            )
+        print("Users table inserted successfully")
+    
     def insert_module(self, module_name, **args):
         if module_name == "1":
-            if "min_users_per_community" in args:
-                self.insert_users(args["min_users_per_community"])
-                print("Users table inserted successfully")
-            elif "max_users_per_community" in args:
-                self.insert_users(args["max_users_per_community"])
-                print("Users table inserted successfully")
-            elif (
-                "max_users_per_community" in args and "min_users_per_community" in args
-            ):
-                self.insert_users(args["min_users_per_community"],args["max_users_per_community"])
-                print("Users table inserted successfully")
-            else:
-                self.insert_users()
-                print("Users table inserted successfully")
+            self.model_users(**args)
         elif module_name == "2":
-            if self.get_table_data_lenght("measurement_units", limit=7) < 6:
-                self.insert_measurement_units()
-                print("Measurement units table inserted successfully")
-            else:
-                print("Measurement units had been inserted before this run.")
-            if self.get_table_data_lenght("fields", limit=1) > 0:
-                print("Fields units had been inserted before this run.")
-            else:
-                self.insert_fields()
-                print("Fields units table inserted successfully")
+            self.model_fields()
         elif module_name == "3":
-            if self.get_table_data_lenght("product_types", limit=1) > 0:
-                print("Product types had been inserted before this run.")
-            else:
-                self.insert_product_types()
-                print("Product types units table inserted successfully")
-
-            if self.get_table_data_lenght("products", limit=1) > 0:
-                print("Products had been inserted before this run.")
-            else:
-                self.insert_products()
-                print("Products table inserted successfully")
-
+            self.model_products()
         elif module_name == "4":
             pass
         else:
@@ -1195,6 +1195,7 @@ class DataMocking:
         changes = {}
         if change.lower() in ["y", "yes"]:
             while True:
+                #change this before commited
                 config_arguments = read_file("script/Configs.py")
                 print(config_arguments, "\nThese are our arguments:")
                 change_input = input(
