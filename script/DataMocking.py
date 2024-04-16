@@ -1178,20 +1178,20 @@ class DataMocking:
             )
         print("Users table inserted successfully")
     
-    def insert_module(self, module_name, **args):
-        if module_name == "1":
+    def insert_model(self, model_name, **args):
+        if model_name == "1":
             self.model_users(**args)
-        elif module_name == "2":
+        elif model_name == "2":
             self.model_fields()
-        elif module_name == "3":
+        elif model_name == "3":
             self.model_products()
-        elif module_name == "4":
+        elif model_name == "4":
             pass
         else:
-            print(f"Table number {module_name} is not recognized.")
+            print(f"Model number {model_name} is not recognized.")
 
     def run(self):
-        change = input("Do you need to change anything? (y/yes or n/no): ")
+        change = input("Do you need to change anything in configs? (y/yes or n/no): ")
         changes = {}
         if change.lower() in ["y", "yes"]:
             while True:
@@ -1217,23 +1217,23 @@ class DataMocking:
                         "Please specify the tables to insert: Press table numbers which you woth to insert splite its with space:"
                     )
                     tables()
-                    module_names = input(
+                    model_names = input(
                         "Enter table numbers separated by space: "
                     ).split()
-                    module_names = [int(name) for name in module_names]
-                    module_names.sort()
-                    module_names = [str(name) for name in module_names]
-                    if table_count == module_names.__len__():
-                        for module_name in module_names:
-                            self.insert_module(module_name)
+                    model_names = [int(name) for name in model_names]
+                    model_names.sort()
+                    model_names = [str(name) for name in model_names]
+                    if table_count == model_names.__len__():
+                        for model_name in model_names:
+                            self.insert_model(model_name)
                     else:
                         print("Tble names much more than table count")
             elif yes.lower() == "y":
-                for module_name in range(1, 22):
-                    self.insert_module(str(module_name))
+                for model_name in range(1, 22):
+                    self.insert_model(str(model_name))
         elif change.lower() in ["y", "yes"]:
-            for module_name in range(1, 22):
-                self.insert_module(str(module_name), **changes)
+            for model_name in range(1, 22):
+                self.insert_model(str(model_name), **changes)
 
         con.commit()
         self.cursor_obj.close()
