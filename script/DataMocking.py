@@ -8,6 +8,7 @@ import datetime
 from time import time
 from utilities import *
 from config_handler import handle_config_changes
+from Models import Models
 
 
 class DataMocking:
@@ -15,6 +16,23 @@ class DataMocking:
         self.cursor_obj = con.cursor()
         self.fake = Faker()
         self.schema = fetch_schema()
+
+        self.model_dependencies = {
+            "fields": [Models.model_fields],
+            "products": [Models.model_product_types, Models.model_products],
+            "users": [Models.model_users],
+            "records": [Models.model_products, Models.model_records],
+            "portable_devices_communities": [
+                Models.model_portable_devices,
+                Models.model_portable_devices_communities,
+            ],
+            ("1", "plantings"): [
+                Models.model_plantings,
+                Models.model_portable_devices,
+                Models.model_portable_devices_communities,
+                Models.model_planting_devices,
+            ],
+        }
 
     def insert_users(
         self,
@@ -421,7 +439,9 @@ class DataMocking:
                     while current_date < corresponding_harvest_date:
                         month = current_date.month
                         current_season = get_season(month)
-                        precipitation_types, weights, temp_range, humidity_range = get_wether_date(current_season, month)
+                        precipitation_types, weights, temp_range, humidity_range = (
+                            get_wether_date(current_season, month)
+                        )
                         prec_type_name = random.choices(
                             precipitation_types, weights=weights
                         )[0]
@@ -605,7 +625,9 @@ class DataMocking:
                 expense_categories,
             )
 
-    def insert_fields(self, min_field_count=min_field_count, max_field_count=max_field_count):
+    def insert_fields(
+        self, min_field_count=min_field_count, max_field_count=max_field_count
+    ):
         # Fetch column names and data types for the fields table from the schema
         field_columns = self.schema.get("fields", {})
         if field_columns:
@@ -619,14 +641,19 @@ class DataMocking:
 
             self.cursor_obj.execute("SELECT * FROM communities")
             communities = self.cursor_obj.fetchall()
-            self.cursor_obj.execute("SELECT id FROM measurement_units WHERE value LIKE %s", ("square kilometres",))
+            self.cursor_obj.execute(
+                "SELECT id FROM measurement_units WHERE value LIKE %s",
+                ("square kilometres",),
+            )
             measurement_unit_id = self.cursor_obj.fetchone()[0]
             for community in communities:
                 for i in range(random.randint(min_field_count, max_field_count)):
                     field_name = f"{community[1]}_field{i + 1}"
                     field_size = random.randint(min_field_size, max_field_size)
                     # Append tuple to fields_data list
-                    fields_data.append((field_size, measurement_unit_id, field_name, None, None))
+                    fields_data.append(
+                        (field_size, measurement_unit_id, field_name, None, None)
+                    )
             # Perform bulk insertion
             self.cursor_obj.executemany(
                 f"INSERT INTO fields ({column_names}) VALUES ({placeholders})",
@@ -1146,38 +1173,6 @@ class DataMocking:
                     planting_data + cultivation_data + harvest_data,
                 )
 
-    def model_fields(self):
-        if self.get_table_data_lenght("measurement_units", limit=7) < 6:
-            self.insert_measurement_units()
-            print("Measurement units table inserted successfully")
-        else:
-            print("Measurement units had been inserted before this run.")
-        if self.get_table_data_lenght("fields", limit=1) > 0:
-            print("Fields units had been inserted before this run.")
-        else:
-            self.insert_fields()
-            print("Fields units table inserted successfully")
-
-    def model_products(self):
-        if self.get_table_data_lenght("product_types", limit=1) > 0:
-            print("Product types had been inserted before this run.")
-        else:
-            self.insert_product_types()
-            print("Product types units table inserted successfully")
-
-        if self.get_table_data_lenght("products", limit=1) > 0:
-            print("Products had been inserted before this run.")
-        else:
-            self.insert_products()
-            print("Products table inserted successfully")
-        
-    def model_users(self, **args):
-        self.insert_users(
-            args.get("min_users_per_community", min_users_per_community1),
-            args.get("max_users_per_community", max_users_per_community1)
-            )
-        print("Users table inserted successfully")
-
     def insert_model(self, model_name, **args):
         if model_name == "1":
             self.model_users(**args)
@@ -1198,11 +1193,10 @@ class DataMocking:
             models = [str(i) for i in range(1, 12)]
             for model in models:
                 self.insert_model(model, **changes)
-            
+
         else:
             models = [str(i) for i in range(1, 12)]
             for model in models:
                 self.insert_model(model)
-
 
         print("Models to be inserted:", models)

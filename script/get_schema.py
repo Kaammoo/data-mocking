@@ -1,6 +1,7 @@
 from db import con
 import psycopg2
 
+
 def fetch_schema():
     """Fetch the database schema from PostgreSQL"""
     schema = {}

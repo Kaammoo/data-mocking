@@ -1,4 +1,4 @@
-#config.py
+# config.py
 max_field_count = 30
 min_field_count = 15
 max_field_size = 150
@@ -9,7 +9,7 @@ max_users_per_community1 = 20
 devices_weights = {
     "hand tool": (-10, 200),
     "Tractor or Combine": (-5, 20),
-    "Truck": (-2, 9)
+    "Truck": (-2, 9),
 }
 community_weights = {
     "Vanadzor": 0.9,
