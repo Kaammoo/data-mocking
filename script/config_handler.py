@@ -1,4 +1,4 @@
-from Utilities import read_config
+from utilities import read_config
 
 def handle_config_changes(default_models=None):
     changes = {}

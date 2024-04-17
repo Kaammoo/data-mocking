@@ -1,13 +1,13 @@
 import random
 from faker import Faker
-from Db import con
-from GetSchema import fetch_schema
-from Configs import *
-from Consts import *
+from db import con
+from get_schema import fetch_schema
+from configs import *
+from consts import *
 import datetime
 from time import time
-from Utilities import *
-from ConfigHandler import handle_config_changes
+from utilities import *
+from config_handler import handle_config_changes
 
 
 class DataMocking:
@@ -1157,8 +1157,7 @@ class DataMocking:
         else:
             self.insert_fields()
             print("Fields units table inserted successfully")
-    
-    
+
     def model_products(self):
         if self.get_table_data_lenght("product_types", limit=1) > 0:
             print("Product types had been inserted before this run.")
@@ -1178,7 +1177,7 @@ class DataMocking:
             args.get("max_users_per_community", max_users_per_community1)
             )
         print("Users table inserted successfully")
-    
+
     def insert_model(self, model_name, **args):
         if model_name == "1":
             self.model_users(**args)

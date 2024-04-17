@@ -1,4 +1,4 @@
-from Db import con
+from db import con
 import psycopg2
 
 def fetch_schema():
