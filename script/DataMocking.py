@@ -16,21 +16,22 @@ class DataMocking:
         self.cursor_obj = con.cursor()
         self.fake = Faker()
         self.schema = fetch_schema()
+        self.models = Models(self)
 
         self.model_dependencies = {
-            "fields": [Models.model_fields],
-            "products": [Models.model_product_types, Models.model_products],
-            "users": [Models.model_users],
-            "records": [Models.model_products, Models.model_records],
+            "fields": [self.models.model_fields],
+            "products": [self.models.model_product_types, self.models.model_products],
+            "users": [self.models.model_users],
+            "records": [self.models.model_products, self.models.model_records],
             "portable_devices_communities": [
-                Models.model_portable_devices,
-                Models.model_portable_devices_communities,
+                self.models.model_portable_devices,
+                self.models.model_portable_devices_communities,
             ],
             ("1", "plantings"): [
-                Models.model_plantings,
-                Models.model_portable_devices,
-                Models.model_portable_devices_communities,
-                Models.model_planting_devices,
+                self.models.model_plantings,
+                self.models.model_portable_devices,
+                self.models.model_portable_devices_communities,
+                self.models.model_planting_devices,
             ],
         }
 
@@ -1174,16 +1175,17 @@ class DataMocking:
                 )
 
     def insert_model(self, model_name, **args):
-        if model_name == "1":
-            self.model_users(**args)
-        elif model_name == "2":
-            self.model_fields()
-        elif model_name == "3":
-            self.model_products()
-        elif model_name == "4":
-            pass
-        else:
-            print(f"Model number {model_name} is not recognized.")
+        pass
+        # if model_name == "1":
+        #    self.model_users(**args)
+        # elif model_name == "2":
+        #    self.model_fields()
+        # elif model_name == "3":
+        #    self.model_products()
+        # elif model_name == "4":
+        #    pass
+        # else:
+        #    print(f"Model number {model_name} is not recognized.")
 
     def run(self):
         change = input("Do you need to change anything in configs? (y/yes or n/no): ")
