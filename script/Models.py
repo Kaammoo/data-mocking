@@ -82,3 +82,59 @@ class Models:
         else:
             self.data_mocking.insert_planting_devices()
             print("Planting devices table inserted successfully")
+
+    def model_harvests(self, **args):
+        if self.data_mocking.get_table_data_lenght("harvests", limit=1) > 0:
+            print("Harvests table had been inserted before this run.")
+        else:
+            self.data_mocking.insert_harvests()
+            print("Harvests table inserted successfully")
+
+    def model_measurement_units(self, **args):
+        if self.data_mocking.get_table_data_lenght("measurement_units", limit=6) > 5:
+            print("Measurement units table had been inserted before this run.")
+        else:
+            self.data_mocking.insert_measurement_units()
+            print("Measurement units table inserted successfully")
+
+    def model_harvest_devices(self, **args):
+        if self.data_mocking.get_table_data_lenght("harvest_devices", limit=1) > 0:
+            print("Harvest devices table had been inserted before this run.")
+        else:
+            self.data_mocking.insert_harvest_devices()
+            print("Harvest devices table inserted successfully")
+
+    def model_precipitation_types(self, **args):
+        if self.data_mocking.get_table_data_lenght("precipitation_types", limit=2) > 1:
+            print("Precipitation types table had been inserted before this run.")
+        else:
+            self.data_mocking.insert_precipitation_types()
+            print("Precipitation types table inserted successfully")
+
+    def model_weather_metrics(self, **args):
+        if self.data_mocking.get_table_data_lenght("weather_metrics", limit=1) > 0:
+            print("Weather metrics table had been inserted before this run.")
+        else:
+            self.data_mocking.insert_weather_metrics()
+            print("Weather metrics table inserted successfully")
+
+    def model_cultivations(self, **args):
+        if self.data_mocking.get_table_data_lenght("cultivations", limit=1) > 0:
+            print("Cultivation table had been inserted before this run.")
+        else:
+            self.data_mocking.insert_cultivations()
+            print("Cultivation table inserted successfully")
+
+    def model_cultivation_devices(self, **args):
+        if self.data_mocking.get_table_data_lenght("cultivation_devices", limit=1) > 0:
+            print("Cultivation devices table had been inserted before this run.")
+        else:
+            self.data_mocking.insert_cultivation_devices()
+            print("Cultivation devices table inserted successfully")
+
+    def model_devices_calendars(self, **args):
+        if self.data_mocking.get_table_data_lenght("devices_calendars", limit=1) > 0:
+            print("Devices calendars table had been inserted before this run.")
+        else:
+            self.data_mocking.insert_devices_calendars()
+            print("Devices calendars table inserted successfully")
