@@ -57,6 +57,7 @@ class DataMocking:
                 self.models.model_harvest_devices,
                 self.models.model_weather_metrics,
                 self.models.model_cultivations,
+                self.models.model_expenses,
                 self.update_calculate_yields,
                 self.models.model_cultivation_devices,
                 self.models.model_devices_calendars,
@@ -67,7 +68,7 @@ class DataMocking:
         self,
         min_users_per_communitys=None,
         max_users_per_communitys=None,
-        community_weights = None
+        community_weights=None,
     ):
         # Fetch column names and data types for the users table from the schema
         user_columns = self.schema.get("users", {})
@@ -147,7 +148,7 @@ class DataMocking:
                     users_communities_data,
                 )
 
-    def insert_records(self,duration = None):
+    def insert_records(self, duration=None):
         # Fetch column names and data types for the records table from the schema
         record_columns = self.schema.get("records", {})
         if record_columns:
@@ -182,7 +183,7 @@ class DataMocking:
                 records_data,
             )
 
-    def insert_expenses(self):
+    def insert_expenses(self, duration=None):
         # Fetch column names and data types for the expenses table from the schema
         expenses_columns = self.schema.get("expenses", {})
         if expenses_columns:
@@ -230,7 +231,7 @@ class DataMocking:
                 insert_data,
             )
 
-    def insert_portable_devices_communities(self):
+    def insert_portable_devices_communities(self, devices_weights=None):
         # Fetch column names and data types for the portable_devices_communities table from the schema
         pdc_columns = self.schema.get("portable_devices_communities", {})
         if pdc_columns:
@@ -656,7 +657,11 @@ class DataMocking:
             )
 
     def insert_fields(
-        self, min_field_count=min_field_count, max_field_count=max_field_count
+        self,
+        min_field_count=None,
+        max_field_count=None,
+        min_field_size=None,
+        max_field_size=None,
     ):
         # Fetch column names and data types for the fields table from the schema
         field_columns = self.schema.get("fields", {})
@@ -869,7 +874,7 @@ class DataMocking:
                 cultivation_data,
             )
 
-    def insert_plantings(self, info_duration=duration):
+    def insert_plantings(self, duration=None):
         # Fetch column names and data types for the plantings table from the schema
         planting_columns = self.schema.get("plantings", {})
         if planting_columns:
@@ -881,7 +886,7 @@ class DataMocking:
             self.cursor_obj.execute("SELECT id, product_id, field_id FROM records")
             records = self.cursor_obj.fetchall()
             used_records = {}
-            years_duration = tuple((i for i in range(1, info_duration + 1)))
+            years_duration = tuple((i for i in range(1, duration + 1)))
 
             # Prepare a list to store all tuples to be inserted
             insert_data = []
@@ -889,7 +894,7 @@ class DataMocking:
             for record in records:
                 field_id = record[2]
                 if field_id in used_records.keys():
-                    if len(used_records[field_id]) >= info_duration:
+                    if len(used_records[field_id]) >= duration:
                         continue
                     elif len(used_records[field_id]) == 1:
                         years_range = tuple(
@@ -1218,4 +1223,3 @@ class DataMocking:
 
         for model in models:
             self.insert_model(model)
-
