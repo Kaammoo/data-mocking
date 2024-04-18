@@ -1,11 +1,14 @@
-from utilities import read_config, tables
+from utilities import read_config, tables, read_file
 
 
 def handle_config_changes(default_models=None):
     change = input("Do you need to change anything in configs? (y/yes or n/no): ")
+    conf = read_config("script/configs.py")
     if change.lower() in ["y", "yes"]:
 
         changes = {}
+        models = [str(i) for i in range(1, 4)]
+        print(read_file("script/configs.py"))
 
         while True:
             print("These are your arguments:")
@@ -35,7 +38,7 @@ def handle_config_changes(default_models=None):
     else:
         return
     
-    conf = read_config("script/configs.py")
+    
     conf.update(changes)
     # Return only the required keys
     return {
@@ -46,8 +49,8 @@ def handle_config_changes(default_models=None):
             "max_field_size",
             "min_field_size",
             "duration",
-            "min_users_per_community1",
-            "max_users_per_community1",
+            "min_users_per_community",
+            "max_users_per_community",
             "devices_weights",
             "community_weights",
             "product_weights",

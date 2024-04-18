@@ -4,8 +4,8 @@ min_field_count = 15
 max_field_size = 150
 min_field_size = 30
 duration = 5
-min_users_per_community1 = 15
-max_users_per_community1 = 20
+min_users_per_community = 15
+max_users_per_community = 20
 devices_weights = {
     "hand tool": (-10, 200),
     "Tractor or Combine": (-5, 20),

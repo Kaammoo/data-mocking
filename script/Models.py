@@ -36,8 +36,9 @@ class Models:
             print("Users had been inserted before this run.")
         else:
             self.data_mocking.insert_users(
-                args.get("min_users_per_community", min_users_per_community1),
-                args.get("max_users_per_community", max_users_per_community1),
+                args.get("min_users_per_community", min_users_per_community),
+                args.get("max_users_per_community", max_users_per_community),
+                args.get("community_weights", community_weights)
             )
             print("Users table inserted successfully")
 
@@ -45,7 +46,9 @@ class Models:
         if self.data_mocking.get_table_data_lenght("records", limit=1) > 0:
             print("Records table had been inserted before this run.")
         else:
-            self.data_mocking.insert_records()
+            self.data_mocking.insert_records(
+                args.get("duration", duration)
+            )
             print("Records table inserted successfully")
 
     def model_portable_devices(self, **args):
@@ -73,7 +76,9 @@ class Models:
         if self.data_mocking.get_table_data_lenght("plantings", limit=1) > 0:
             print("Plantings table had been inserted before this run.")
         else:
-            self.data_mocking.insert_plantings()
+            self.data_mocking.insert_plantings(
+                args.get("duration", duration)
+            )
             print("Plantings table inserted successfully")
 
     def model_planting_devices(self, **args):

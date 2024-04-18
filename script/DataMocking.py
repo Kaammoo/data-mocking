@@ -67,6 +67,7 @@ class DataMocking:
         self,
         min_users_per_communitys=None,
         max_users_per_communitys=None,
+        community_weights = None
     ):
         # Fetch column names and data types for the users table from the schema
         user_columns = self.schema.get("users", {})
@@ -146,7 +147,7 @@ class DataMocking:
                     users_communities_data,
                 )
 
-    def insert_records(self):
+    def insert_records(self,duration = None):
         # Fetch column names and data types for the records table from the schema
         record_columns = self.schema.get("records", {})
         if record_columns:
