@@ -1203,30 +1203,18 @@ class DataMocking:
                 )
 
     def insert_model(self, model_name, **args):
-        pass
-        # if model_name == "1":
-        #    self.model_users(**args)
-        # elif model_name == "2":
-        #    self.model_fields()
-        # elif model_name == "3":
-        #    self.model_products()
-        # elif model_name == "4":
-        #    pass
-        # else:
-        #    print(f"Model number {model_name} is not recognized.")
+        for key in self.model_dependencies:
+            if model_name in key:
+                for func in self.model_dependencies[key]:
+                    func()
+                break  # Call each function associated with the model name
 
     def run(self):
-        change = input("Do you need to change anything in configs? (y/yes or n/no): ")
 
-        if change.lower() in ["y", "yes"]:
-            changes, models = handle_config_changes()
-            models = [str(i) for i in range(1, 12)]
-            for model in models:
-                self.insert_model(model, **changes)
+        changes, models = handle_config_changes()
+        for model in models:
+            self.insert_model(model, **changes)
 
-        else:
-            models = [str(i) for i in range(1, 12)]
-            for model in models:
-                self.insert_model(model)
+        for model in models:
+            self.insert_model(model)
 
-        print("Models to be inserted:", models)

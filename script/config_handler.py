@@ -1,28 +1,42 @@
-from utilities import read_config
+from utilities import read_config, tables
 
 
 def handle_config_changes(default_models=None):
-    changes = {}
-    models = default_models if default_models else [str(i) for i in range(1, 12)]
+    change = input("Do you need to change anything in configs? (y/yes or n/no): ")
+    if change.lower() in ["y", "yes"]:
 
-    while True:
-        print("These are your arguments:")
-        change_input = input(
-            "Enter the change you want to make (key=new_value), or enter 'done' to finish: "
-        )
-        if change_input.lower() == "done":
-            break
-        elif change_input.lower() == "not all":
+        changes = {}
+
+        while True:
+            print("These are your arguments:")
+
+            change_input = input(
+                "Enter the change you want to make (key=new_value), or enter 'done' to finish: "
+            )
+            if change_input.lower() == "done":
+                break
+            elif change_input.lower() == "not all":
+                models = input("Enter model numbers separated by space: ").split()
+            else:
+                key, value = change_input.split("=")
+                changes[key.strip()] = value.strip()
+
+        # Merge changes with existing configuration
+    elif change.lower() in ["n", "no"]:
+        changes = {}
+        run_all = input("Do you want to run all models? (y/yes or n/no): ").lower()
+        if run_all in ["y", "yes"]:
+            models = [str(i) for i in range(1, 4)]
+        elif run_all in ["n", "no"]:
+            tables()
             models = input("Enter model numbers separated by space: ").split()
         else:
-            key, value = change_input.split("=")
-            changes[key.strip()] = value.strip()
-
-    conf = read_config("script/Configs.py")
-
-    # Merge changes with existing configuration
+            print("Invalid input. Please enter y/yes or n/no.")
+    else:
+        return
+    
+    conf = read_config("script/configs.py")
     conf.update(changes)
-
     # Return only the required keys
     return {
         k: conf[k]

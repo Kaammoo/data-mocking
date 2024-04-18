@@ -105,7 +105,7 @@ class Models:
             print("Harvest devices table inserted successfully")
 
     def model_precipitation_types(self, **args):
-        if self.data_mocking.get_table_data_lenght("precipitation_types", limit=2) > 1:
+        if self.data_mocking.get_table_data_lenght("prec_types", limit=2) > 1:
             print("Precipitation types table had been inserted before this run.")
         else:
             self.data_mocking.insert_precipitation_types()

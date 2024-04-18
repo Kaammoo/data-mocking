@@ -77,17 +77,9 @@ def get_insert_quantity(portable_device_community_quantity):
 def tables():
     print(
         """
-    1: Users/Communities
-    2: Fields/Measurement Units
-    3: Product/Types
-    4: Records/Product
-    5: Portable Devices/Communities
-    6: Plantings/Records
-    7: Harvests/Plantings
-    8: Expenses/Expenses Category/Record
-    9: Revenues/Harvests
-    10: Weather Metrics/Harvests
-    11: Cultivations/Weather Metrics
+    1: Plantings
+    2: Harvests
+    3: Cultivations
     """
     )
 
