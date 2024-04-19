@@ -19,10 +19,6 @@ To get started with this project, follow these instructions:
     pip install -r requirements.txt
     ```
 3. Set up a PostgreSQL database and configure the connection details in the `config.py` file.
-4. Run the main script to populate the database:
-    ```
-    python main.py
-    ```
 
 ## Usage
 
