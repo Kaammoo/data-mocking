@@ -5,7 +5,7 @@ from get_schema import fetch_schema
 from configs import *
 from consts import *
 import datetime
-from time import time
+import time 
 from utilities import *
 from config_handler import handle_config_changes
 from Models import Models
@@ -21,6 +21,7 @@ class DataMocking:
         self.model_dependencies = {
             ("1", "plantings"): [
                 self.models.model_users,
+                self.models.model_product_types,
                 self.models.model_products,
                 self.models.model_measurement_units,
                 self.models.model_fields,
@@ -32,6 +33,7 @@ class DataMocking:
             ],
             ("2", "harvests"): [
                 self.models.model_users,
+                self.models.model_product_types,
                 self.models.model_products,
                 self.models.model_measurement_units,
                 self.models.model_fields,
@@ -44,6 +46,7 @@ class DataMocking:
             ],
             ("3", "cultivations"): [
                 self.models.model_users,
+                self.models.model_product_types,
                 self.models.model_products,
                 self.models.model_measurement_units,
                 self.models.model_precipitation_types,
@@ -70,6 +73,7 @@ class DataMocking:
         max_users_per_communitys=None,
         community_weights=None,
     ):
+        start_time = time.time()
         # Fetch column names and data types for the users table from the schema
         user_columns = self.schema.get("users", {})
         if user_columns:
@@ -147,8 +151,12 @@ class DataMocking:
                     f"INSERT INTO users_communities ({column_names}) VALUES ({placeholders})",
                     users_communities_data,
                 )
+        end_time = time.time()  # End timing
+        elapsed_time = end_time - start_time
+        return elapsed_time, len(users_data)+len(users_communities_data)
 
     def insert_records(self, duration=None):
+        start_time = time.time()
         # Fetch column names and data types for the records table from the schema
         record_columns = self.schema.get("records", {})
         if record_columns:
@@ -182,8 +190,12 @@ class DataMocking:
                 f"INSERT INTO records ({column_names}) VALUES ({placeholders})",
                 records_data,
             )
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(records_data)
 
     def insert_expenses(self, duration=None):
+        start_time = time.time()
         # Fetch column names and data types for the expenses table from the schema
         expenses_columns = self.schema.get("expenses", {})
         if expenses_columns:
@@ -230,8 +242,12 @@ class DataMocking:
                 """,
                 insert_data,
             )
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(expense_date)
 
-    def insert_portable_devices_communities(self, devices_weights=None):
+    def insert_portable_devices_communities(self, devices_weights=devices_weights):
+        start_time = time.time()
         # Fetch column names and data types for the portable_devices_communities table from the schema
         pdc_columns = self.schema.get("portable_devices_communities", {})
         if pdc_columns:
@@ -268,12 +284,17 @@ class DataMocking:
                 f"INSERT INTO portable_devices_communities ({column_names}) VALUES ({placeholders})",
                 insertion_data,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(insertion_data)
 
     def get_table_data_lenght(self, table_name, limit=10):
         self.cursor_obj.execute(f"SELECT COUNT(id) FROM {table_name} LIMIT {limit}")
         return self.cursor_obj.fetchone()[0]
 
     def insert_planting_devices(self):
+        start_time = time.time()
         # Fetch column names and data types for the planting_devices table from the schema
         planting_devices_columns = self.schema.get("planting_devices", {})
         if planting_devices_columns:
@@ -321,8 +342,13 @@ class DataMocking:
                 f"INSERT INTO planting_devices ({column_names}) VALUES ({placeholders})",
                 insertion_data,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(insertion_data)
 
     def insert_harvests_devices(self):
+        start_time = time.time()
         # Fetch column names and data types for the harvest_devices table from the schema
         harvest_devices_columns = self.schema.get("harvest_devices", {})
         if harvest_devices_columns:
@@ -370,6 +396,10 @@ class DataMocking:
                 f"INSERT INTO harvest_devices ({column_names}) VALUES ({placeholders})",
                 insertion_data,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(insertion_data)
 
     def update_calculate_yields(self):
         self.cursor_obj.execute(
@@ -428,6 +458,7 @@ class DataMocking:
             )
 
     def insert_weather_metrics(self):
+        start_time = time.time()
         # Fetch column names and data types for the weather_metrics table from the schema
         weather_columns = self.schema.get("weather_metrics", {})
         if weather_columns:
@@ -515,8 +546,12 @@ class DataMocking:
                     """,
                     weather_data,
                 )
+                end_time = time.time()  # End timing
+                elapsed_time = end_time - start_time
+                return elapsed_time, len(weather_data)
 
     def insert_product_types(self):
+        start_time = time.time()
         # Fetch column names and data types for the product_types table from the schema
         product_type_columns = self.schema.get("product_types", {})
         if product_type_columns:
@@ -535,8 +570,13 @@ class DataMocking:
                     f"INSERT INTO product_types ({column_names}) VALUES ({placeholders})",
                     product_type,
                 )
+                start_time = time.time()
+                end_time = time.time()  # End timing
+                elapsed_time = end_time - start_time
+                return elapsed_time, len(product_type_data)
 
     def insert_products(self):
+        start_time = time.time()
         # Fetch column names and data types for the products table from the schema
         product_columns = self.schema.get("products", {})
         if product_columns:
@@ -549,10 +589,6 @@ class DataMocking:
                 "SELECT id FROM product_types WHERE type = 'vegetables'"
             )
             vegetable_id = self.cursor_obj.fetchone()[0]  # Fetching only the ID
-            self.cursor_obj.execute(
-                "SELECT id FROM product_types WHERE type = 'cereal'"
-            )
-            cereal_id = self.cursor_obj.fetchone()[0]  # Fetching only the ID
 
             # List to store tuples of values to insert
             insertion_data = []
@@ -561,7 +597,8 @@ class DataMocking:
                 if "vegetable" in product[1].lower():
                     type_id = vegetable_id
                 else:
-                    type_id = cereal_id
+                    type_id = vegetable_id+1
+                print(type_id)
 
                 # Append tuple of values for each product
                 insertion_data.append((type_id, product[0], product[1]))
@@ -571,8 +608,12 @@ class DataMocking:
                 f"INSERT INTO products ({column_names}) VALUES ({placeholders})",
                 insertion_data,
             )
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(insertion_data)
 
     def insert_measurement_units(self):
+        start_time = time.time()
         # Fetch column names and data types for the measurement_units table from the schema
         measurement_columns = self.schema.get("measurement_units", {})
         if measurement_columns:
@@ -592,8 +633,13 @@ class DataMocking:
                 f"INSERT INTO measurement_units ({column_names}) VALUES ({placeholders})",
                 measurement_data,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(measurement_data)
 
     def insert_revenues(self):
+        start_time = time.time()
         # Fetch column names and data types for the revenues table from the schema
         revenue_columns = self.schema.get("revenues", {})
         if revenue_columns:
@@ -618,8 +664,13 @@ class DataMocking:
                 f"INSERT INTO revenues ({column_names}) VALUES ({placeholders})",
                 revenue_data,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(revenue_data)
 
     def insert_precipitation_types(self):
+        start_time = time.time()
         # Fetch column names and data types for the prec_types table from the schema
         prec_types_columns = self.schema.get("prec_types", {})
         if prec_types_columns:
@@ -636,8 +687,13 @@ class DataMocking:
                 f"INSERT INTO prec_types ({column_names}) VALUES ({placeholders})",
                 precipitation_types,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(precipitation_types)
 
     def insert_expense_categories(self):
+        start_time = time.time()
         # Fetch column names and data types for the expense_categories table from the schema
         expense_categories_columns = self.schema.get("expense_categories", {})
         if expense_categories_columns:
@@ -655,14 +711,20 @@ class DataMocking:
                 f"INSERT INTO expense_categories ({column_names}) VALUES ({placeholders})",
                 expense_categories,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(expense_categories)
 
     def insert_fields(
         self,
-        min_field_count=None,
-        max_field_count=None,
-        min_field_size=None,
-        max_field_size=None,
+        min_field_count=min_field_count,
+        max_field_count=max_field_count,
+        min_field_size=min_field_size,
+        max_field_size=max_field_size,
+        field_owner_weights=field_owner_weights,
     ):
+        start_time = time.time()
         # Fetch column names and data types for the fields table from the schema
         field_columns = self.schema.get("fields", {})
         if field_columns:
@@ -681,19 +743,35 @@ class DataMocking:
                 ("square kilometres",),
             )
             measurement_unit_id = self.cursor_obj.fetchone()[0]
+
+            # Iterate over communities to insert fields based on field ownership weights
             for community in communities:
-                for i in range(random.randint(min_field_count, max_field_count)):
-                    field_name = f"{community[1]}_field{i + 1}"
-                    field_size = random.randint(min_field_size, max_field_size)
-                    # Append tuple to fields_data list
-                    fields_data.append(
-                        (field_size, measurement_unit_id, field_name, None, None)
-                    )
+                community_name = community[1]
+                present_users_count = random.randint(min_field_count, max_field_count)
+                max_users_count = round(
+                    present_users_count * field_owner_weights.get(community_name, 0)
+                )
+                users_with_fields = random.randint(
+                    1, max_users_count if max_users_count >= 1 else 1
+                )  # Randomly select number of users with fields
+                community_field_count = random.randint(
+                    min_field_count,
+                    max(min_field_count, min(max_field_count, max_users_count)),
+                )  # Randomly select field count for community
+                for user_index in range(users_with_fields):
+                    if user_index < community_field_count:
+                        field_name = f"{community_name}_field{user_index + 1}"
+                        field_size = random.randint(min_field_size, max_field_size)
+                        # Append tuple to fields_data list
+                        fields_data.append(
+                            (field_size, measurement_unit_id, field_name, None, None)
+                        )
             # Perform bulk insertion
             self.cursor_obj.executemany(
                 f"INSERT INTO fields ({column_names}) VALUES ({placeholders})",
                 fields_data,
             )
+            
 
             # Fetch column names for the fields_communities table from the schema
             fields_communities_columns = self.schema.get("fields_communities", {})
@@ -713,23 +791,45 @@ class DataMocking:
                 fields_communities_data = []
 
                 for community in communities:
-                    community_name = community[1] + "%"
-                    community_id = community[0]
-                    self.cursor_obj.execute(
-                        f"SELECT * FROM fields WHERE name LIKE '{community_name}'"
+                    community_name = community[1]
+                    present_users_count = random.randint(
+                        min_field_count, max_field_count
                     )
-                    fields = self.cursor_obj.fetchall()
-                    for field in fields:
-                        # Append tuple to fields_communities_data list
-                        fields_communities_data.append((field[0], community_id))
+                    max_users_count = round(
+                        present_users_count
+                        * field_owner_weights.get(community_name, 0.5)
+                    )
+                    users_with_fields = random.randint(
+                        1, max_users_count
+                    )  # Randomly select number of users with fields
+                    if max_field_count >= min_field_count:
+                        community_field_count = random.randint(
+                            min(min_field_count, max_field_count),
+                            max(max_field_count, min_field_count),
+                        )
+
+                    else:
+                        community_field_count = min_field_count
+
+                    for user_index in range(users_with_fields):
+                        if user_index < community_field_count:
+                            # Append tuple to fields_communities_data list
+                            fields_communities_data.append(
+                                (fields_data[user_index][0], community[0])
+                            )
 
                 # Perform bulk insertion into fields_communities
                 self.cursor_obj.executemany(
                     f"INSERT INTO fields_communities ({fc_column_names}) VALUES ({fc_placeholders})",
                     fields_communities_data,
                 )
+                start_time = time.time()
+                end_time = time.time()  # End timing
+                elapsed_time = end_time - start_time
+                return elapsed_time, len(fields_data)+len(fields_communities_data)
 
     def insert_portable_devices(self):
+        start_time = time.time()
         # Fetch column names and data types for the portable_devices table from the schema
         portable_devices_columns = self.schema.get("portable_devices", {})
         if portable_devices_columns:
@@ -755,8 +855,13 @@ class DataMocking:
                 f"INSERT INTO portable_devices ({column_names}) VALUES ({placeholders})",
                 insertion_data,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(insertion_data)
 
     def insert_cultivations(self):
+        start_time = time.time()
         # Fetch column names and data types for the cultivations table from the schema
         cultivation_columns = self.schema.get("cultivations", {})
         if cultivation_columns:
@@ -873,8 +978,13 @@ class DataMocking:
                 f"INSERT INTO cultivations ({column_names}) VALUES ({placeholders})",
                 cultivation_data,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(cultivation_data)
 
     def insert_plantings(self, duration=None):
+        start_time = time.time()
         # Fetch column names and data types for the plantings table from the schema
         planting_columns = self.schema.get("plantings", {})
         if planting_columns:
@@ -947,8 +1057,13 @@ class DataMocking:
                 f"INSERT INTO plantings ({column_names}) VALUES ({placeholders})",
                 insert_data,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(insert_data)
 
     def insert_harvests(self):
+        start_time = time.time()
         # Fetch column names and data types for the harvests table from the schema
         harvest_columns = self.schema.get("harvests", {})
         if harvest_columns:
@@ -1037,8 +1152,13 @@ class DataMocking:
                 f"INSERT INTO harvests ({column_names}) VALUES ({placeholders})",
                 insert_data,
             )
+            start_time = time.time()
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(insert_data)
 
     def insert_cultivation_devices(self):
+        start_time = time.time()
         # Fetch column names and data types for the cultivation_devices table from the schema
         cultivation_devices_columns = self.schema.get("cultivation_devices", {})
         if cultivation_devices_columns:
@@ -1084,8 +1204,13 @@ class DataMocking:
                     f"INSERT INTO cultivation_devices ({column_names}) VALUES ({placeholders})",
                     cultivation_devices_data,
                 )
+                start_time = time.time()
+                end_time = time.time()  # End timing
+                elapsed_time = end_time - start_time
+                return elapsed_time, len(cultivation_devices_data)
 
     def insert_devices_calendars(self):
+        start_time = time.time()
         # Fetch column names and data types for the devices_calendars table from the schema
         devices_calendars_columns = self.schema.get("devices_calendars", {})
         if devices_calendars_columns:
@@ -1207,6 +1332,10 @@ class DataMocking:
                     """,
                     planting_data + cultivation_data + harvest_data,
                 )
+                start_time = time.time()
+                end_time = time.time()  # End timing
+                elapsed_time = end_time - start_time
+                return elapsed_time, len(planting_data)+len(cultivation_data)+len(harvest_data)
 
     def insert_model(self, model_name, **args):
         for key in self.model_dependencies:

@@ -11,6 +11,18 @@ devices_weights = {
     "Tractor or Combine": (-5, 20),
     "Truck": (-2, 9),
 }
+field_owner_weights = {
+    "Vanadzor": 0.9,    
+    "Alaverdi": 0.8,    
+    "Spitak": 0.6,      
+    "Stepanavan": 0.9,  
+    "Tashir": 0.8,      
+    "Akhtala": 0.6,     
+    "Tumanyan": 0.9,    
+    "Gyulagarak": 0.7,    
+    "Pambak": 0.8,      
+    "Odzun": 0.6,
+}
 community_weights = {
     "Vanadzor": 0.9,
     "Alaverdi": 0.8,
