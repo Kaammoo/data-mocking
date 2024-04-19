@@ -600,7 +600,6 @@ class DataMocking:
                     type_id = vegetable_id
                 else:
                     type_id = vegetable_id + 1
-                print(type_id)
 
                 # Append tuple of values for each product
                 insertion_data.append((type_id, product[0], product[1]))
