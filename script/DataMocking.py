@@ -287,7 +287,7 @@ class DataMocking:
                 f"INSERT INTO portable_devices_communities ({column_names}) VALUES ({placeholders})",
                 insertion_data,
             )
-            start_time = time.time()
+            
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(insertion_data)
@@ -345,7 +345,7 @@ class DataMocking:
                 f"INSERT INTO planting_devices ({column_names}) VALUES ({placeholders})",
                 insertion_data,
             )
-            start_time = time.time()
+            
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(insertion_data)
@@ -399,7 +399,7 @@ class DataMocking:
                 f"INSERT INTO harvest_devices ({column_names}) VALUES ({placeholders})",
                 insertion_data,
             )
-            start_time = time.time()
+            
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(insertion_data)
@@ -635,7 +635,6 @@ class DataMocking:
                 f"INSERT INTO measurement_units ({column_names}) VALUES ({placeholders})",
                 measurement_data,
             )
-            start_time = time.time()
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(measurement_data)
@@ -666,7 +665,6 @@ class DataMocking:
                 f"INSERT INTO revenues ({column_names}) VALUES ({placeholders})",
                 revenue_data,
             )
-            start_time = time.time()
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(revenue_data)
@@ -689,7 +687,6 @@ class DataMocking:
                 f"INSERT INTO prec_types ({column_names}) VALUES ({placeholders})",
                 precipitation_types,
             )
-            start_time = time.time()
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(precipitation_types)
@@ -713,7 +710,6 @@ class DataMocking:
                 f"INSERT INTO expense_categories ({column_names}) VALUES ({placeholders})",
                 expense_categories,
             )
-            start_time = time.time()
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(expense_categories)
@@ -813,7 +809,6 @@ class DataMocking:
                     f"INSERT INTO fields_communities ({fc_column_names}) VALUES ({fc_placeholders})",
                     fields_communities_data,
                 )
-                start_time = time.time()
                 end_time = time.time()  # End timing
                 elapsed_time = end_time - start_time
                 return elapsed_time, len(fields_data)
@@ -845,7 +840,7 @@ class DataMocking:
                 f"INSERT INTO portable_devices ({column_names}) VALUES ({placeholders})",
                 insertion_data,
             )
-            start_time = time.time()
+
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(insertion_data)
@@ -968,7 +963,6 @@ class DataMocking:
                 f"INSERT INTO cultivations ({column_names}) VALUES ({placeholders})",
                 cultivation_data,
             )
-            start_time = time.time()
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(cultivation_data)
@@ -1047,7 +1041,6 @@ class DataMocking:
                 f"INSERT INTO plantings ({column_names}) VALUES ({placeholders})",
                 insert_data,
             )
-            start_time = time.time()
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(insert_data)
@@ -1142,7 +1135,6 @@ class DataMocking:
                 f"INSERT INTO harvests ({column_names}) VALUES ({placeholders})",
                 insert_data,
             )
-            start_time = time.time()
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
             return elapsed_time, len(insert_data)
@@ -1194,7 +1186,6 @@ class DataMocking:
                     f"INSERT INTO cultivation_devices ({column_names}) VALUES ({placeholders})",
                     cultivation_devices_data,
                 )
-                start_time = time.time()
                 end_time = time.time()  # End timing
                 elapsed_time = end_time - start_time
                 return elapsed_time, len(cultivation_devices_data)
@@ -1322,7 +1313,6 @@ class DataMocking:
                     """,
                     planting_data + cultivation_data + harvest_data,
                 )
-                start_time = time.time()
                 end_time = time.time()  # End timing
                 elapsed_time = end_time - start_time
                 return elapsed_time, len(planting_data) + len(cultivation_data) + len(
