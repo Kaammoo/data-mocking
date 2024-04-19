@@ -1,6 +1,6 @@
 import datetime
 import random
-import yaml
+
 
 def get_season(month):
     if month in range(3, 6):
@@ -172,8 +172,10 @@ def read_file(file_path):
         print(f"Error occurred: {str(e)}")
 
 
-def read_config_yaml(file_path):
-    with open(file_path, 'r') as file:
-        prime_service = yaml.safe_load(file)
+def read_config(file_path):
+    config = {}
 
-    return prime_service
+    with open(file_path, "r") as file:
+        exec(file.read(), config)
+
+    return config

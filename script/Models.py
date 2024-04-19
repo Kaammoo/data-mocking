@@ -1,3 +1,6 @@
+from configs import *
+
+
 class Models:
     def __init__(self, data_mocking):
         self.data_mocking = data_mocking
@@ -6,6 +9,7 @@ class Models:
         print(
             f"\nReport {table_name}\n inserted data count is:  {count}  \n It lasted: {time} \n"
         )
+        self.data_mocking.count += count
 
     def model_fields(self, **args):
         if self.data_mocking.get_table_data_lenght("measurement_units", limit=7) < 6:
@@ -18,11 +22,11 @@ class Models:
             print("Fields units table had been inserted before this run.")
         else:
             times, count = self.data_mocking.insert_fields(
-                args.get("min_field_count"),
-                args.get("max_field_count"),
-                args.get("min_field_size"),
-                args.get("max_field_size"),
-                args.get("field_owner_weights"),
+                args.get("min_field_count", min_field_count),
+                args.get("max_field_count", max_field_count),
+                args.get("min_field_size", min_field_size),
+                args.get("max_field_size", max_field_size),
+                args.get("field_owner_weights", field_owner_weights),
             )
             print("\nFields units table inserted successfully")
             self.report("fields", count, times)
@@ -48,9 +52,9 @@ class Models:
             print("Users had been inserted before this run.")
         else:
             times, count = self.data_mocking.insert_users(
-                args.get("min_users_per_community"),
-                args.get("max_users_per_community"),
-                args.get("community_weights"),
+                args.get("min_users_per_community", min_users_per_community),
+                args.get("max_users_per_community", max_users_per_community),
+                args.get("community_weights", community_weights),
             )
             print("\n Users table inserted successfully \n")
             self.report("users", count, times)
@@ -60,7 +64,7 @@ class Models:
             print("Records table had been inserted before this run.")
         else:
             times, count = self.data_mocking.insert_records(
-                args.get("duration")
+                args.get("duration", duration)
             )
             print("\n Records table inserted successfully")
             self.report("records", count, times)
@@ -85,7 +89,7 @@ class Models:
             )
         else:
             times, count = self.data_mocking.insert_portable_devices_communities(
-                args.get("devices_weights")
+                args.get("devices_weights", devices_weights)
             )
             print("\nPortable devices communities table inserted successfully")
             self.report("portable_devices_communities", count, times)
@@ -95,7 +99,7 @@ class Models:
             print("Plantings table had been inserted before this run.")
         else:
             times, count = self.data_mocking.insert_plantings(
-                args.get("duration")
+                args.get("duration", duration)
             )
             print("\nPlantings table inserted successfully")
             self.report("plantings", count, times)
@@ -177,7 +181,7 @@ class Models:
             print("Expenses table had been inserted before this run.")
         else:
             times, count = self.data_mocking.insert_expenses(
-                args.get("duration")
+                args.get("duration", duration)
             )
             print("\nExpenses table inserted successfully")
             self.report("expenses", count, times)

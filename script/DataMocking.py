@@ -2,21 +2,22 @@ import random
 from faker import Faker
 from db import con
 from get_schema import fetch_schema
+from configs import *
 from consts import *
 import datetime
-import time 
+import time
 from utilities import *
+from config_handler import handle_config_changes
 from Models import Models
 
 
 class DataMocking:
-    def __init__(self, changes, models):
+    def __init__(self):
         self.cursor_obj = con.cursor()
         self.fake = Faker()
         self.schema = fetch_schema()
         self.models = Models(self)
-        self.changes = changes
-        self.models = models
+        self.count = 0
 
         self.model_dependencies = {
             ("1", "plantings"): [
@@ -69,8 +70,8 @@ class DataMocking:
 
     def insert_users(
         self,
-        min_users_per_communitys=None,
-        max_users_per_communitys=None,
+        min_users_per_community=None,
+        max_users_per_community=None,
         community_weights=None,
     ):
         start_time = time.time()
@@ -83,8 +84,12 @@ class DataMocking:
             placeholders = ", ".join(["%s"] * (len(user_columns) - 1))
 
             # Provide default values if parameters are None
-            min_users_per_community = int(min_users_per_communitys)
-            max_users_per_community = int(max_users_per_communitys)
+            min_users_per_community = (
+                int(min_users_per_community) if min_users_per_community else 0
+            )
+            max_users_per_community = (
+                int(max_users_per_community) if max_users_per_community else 0
+            )
 
             # Fetch community names from the database
             self.cursor_obj.execute("SELECT name FROM communities")
@@ -92,17 +97,13 @@ class DataMocking:
 
             users_data = []
 
-            # Insert users into the users table
+            # Generate users for each community
             for community_name in community_names:
-                weight = community_weights.get(
-                    community_name, 0.5
-                )  # Default weight is 0.5 if not found
-                adjusted_users = round(
-                    ((max_users_per_community - min_users_per_community) * weight)
-                    + min_users_per_community
+                # Calculate random number of users for this community
+                num_users = random.randint(
+                    min_users_per_community, max_users_per_community
                 )
-
-                for _ in range(adjusted_users):
+                for _ in range(num_users):
                     name = self.fake.name()
                     unique_id = str(random.randint(1, 500))
                     email = self.fake.email() + f"_{unique_id}"
@@ -135,25 +136,27 @@ class DataMocking:
                     ]
                 )
                 placeholders = ", ".join(["%s"] * (len(users_communities_columns) - 1))
-            users_communities_data = []
-            for community_name in community_names:
-                community_id = community_names.index(community_name) + 1
-                community_user_ids = random.sample(
-                    user_ids,
-                    k=round(len(user_ids) * community_weights.get(community_name, 0.5)),
-                )
-                for (user_id,) in community_user_ids:
-                    users_communities_data.append((user_id, community_id))
 
-            # Insert user-community relationships using executemany
-            if users_communities_data:
-                self.cursor_obj.executemany(
-                    f"INSERT INTO users_communities ({column_names}) VALUES ({placeholders})",
-                    users_communities_data,
-                )
+                users_communities_data = []
+                for community_name in community_names:
+                    community_id = community_names.index(community_name) + 1
+                    community_user_ids = random.sample(
+                        user_ids,
+                        k=num_users,
+                    )
+                    for (user_id,) in community_user_ids:
+                        users_communities_data.append((user_id, community_id))
+
+                # Insert user-community relationships using executemany
+                if users_communities_data:
+                    self.cursor_obj.executemany(
+                        f"INSERT INTO users_communities ({column_names}) VALUES ({placeholders})",
+                        users_communities_data,
+                    )
+
         end_time = time.time()  # End timing
         elapsed_time = end_time - start_time
-        return elapsed_time, len(users_data)+len(users_communities_data)
+        return elapsed_time, len(users_data)
 
     def insert_records(self, duration=None):
         start_time = time.time()
@@ -170,7 +173,7 @@ class DataMocking:
 
             self.cursor_obj.execute("SELECT * FROM communities")
             communities = self.cursor_obj.fetchall()
-            self.cursor_obj.execute("SELECT * FROM products")
+            self.cursor_obj.execute("SELECT id FROM products")
             products = self.cursor_obj.fetchall()
 
             for community in communities:
@@ -181,10 +184,10 @@ class DataMocking:
                 )
                 fields = self.cursor_obj.fetchall()
                 for field in fields:
-                    unique_products = random.sample(products, duration)
-                    for product in unique_products:
-                        # Append tuple to records_data list
-                        records_data.append((community_id, field[0], product[0]))
+                    for i in range(duration):
+                        product_i = random.choice(products)[0]
+                        records_data.append((community_id, field[0], product_i))
+
             # Perform bulk insertion
             self.cursor_obj.executemany(
                 f"INSERT INTO records ({column_names}) VALUES ({placeholders})",
@@ -246,7 +249,7 @@ class DataMocking:
             elapsed_time = end_time - start_time
             return elapsed_time, len(insert_data)
 
-    def insert_portable_devices_communities(self, devices_weights=None):
+    def insert_portable_devices_communities(self, devices_weights=devices_weights):
         start_time = time.time()
         # Fetch column names and data types for the portable_devices_communities table from the schema
         pdc_columns = self.schema.get("portable_devices_communities", {})
@@ -596,7 +599,7 @@ class DataMocking:
                 if "vegetable" in product[1].lower():
                     type_id = vegetable_id
                 else:
-                    type_id = vegetable_id+1
+                    type_id = vegetable_id + 1
                 print(type_id)
 
                 # Append tuple of values for each product
@@ -717,11 +720,11 @@ class DataMocking:
 
     def insert_fields(
         self,
-        min_field_count=None,
-        max_field_count=None,
-        min_field_size=None,
-        max_field_size=None,
-        field_owner_weights=None,
+        min_field_count=min_field_count,
+        max_field_count=max_field_count,
+        min_field_size=min_field_size,
+        max_field_size=max_field_size,
+        field_owner_weights=field_owner_weights,
     ):
         start_time = time.time()
         # Fetch column names and data types for the fields table from the schema
@@ -746,31 +749,19 @@ class DataMocking:
             # Iterate over communities to insert fields based on field ownership weights
             for community in communities:
                 community_name = community[1]
-                present_users_count = random.randint(min_field_count, max_field_count)
-                max_users_count = round(
-                    present_users_count * field_owner_weights.get(community_name, 0)
-                )
-                users_with_fields = random.randint(
-                    1, max_users_count if max_users_count >= 1 else 1
-                )  # Randomly select number of users with fields
-                community_field_count = random.randint(
-                    min_field_count,
-                    max(min_field_count, min(max_field_count, max_users_count)),
-                )  # Randomly select field count for community
-                for user_index in range(users_with_fields):
-                    if user_index < community_field_count:
-                        field_name = f"{community_name}_field{user_index + 1}"
-                        field_size = random.randint(min_field_size, max_field_size)
-                        # Append tuple to fields_data list
-                        fields_data.append(
-                            (field_size, measurement_unit_id, field_name, None, None)
+                present_users_count = random.randint(min_field_count, max_field_count)                
+                for user_index in range(present_users_count):
+                    field_name = f"{community_name}_field{user_index + 1}"
+                    field_size = random.randint(min_field_size, max_field_size)
+                    # Append tuple to fields_data list
+                    fields_data.append(
+                        (field_size, measurement_unit_id, field_name, None, None)
                         )
             # Perform bulk insertion
             self.cursor_obj.executemany(
                 f"INSERT INTO fields ({column_names}) VALUES ({placeholders})",
                 fields_data,
             )
-            
 
             # Fetch column names for the fields_communities table from the schema
             fields_communities_columns = self.schema.get("fields_communities", {})
@@ -825,7 +816,7 @@ class DataMocking:
                 start_time = time.time()
                 end_time = time.time()  # End timing
                 elapsed_time = end_time - start_time
-                return elapsed_time, len(fields_data)+len(fields_communities_data)
+                return elapsed_time, len(fields_data)
 
     def insert_portable_devices(self):
         start_time = time.time()
@@ -1334,22 +1325,23 @@ class DataMocking:
                 start_time = time.time()
                 end_time = time.time()  # End timing
                 elapsed_time = end_time - start_time
-                return elapsed_time, len(planting_data)+len(cultivation_data)+len(harvest_data)
+                return elapsed_time, len(planting_data) + len(cultivation_data) + len(
+                    harvest_data
+                )
 
     def insert_model(self, model_name, **args):
         for key in self.model_dependencies:
             if model_name in key:
-                for function in self.model_dependencies[key]:
-                    function()
+                for func in self.model_dependencies[key]:
+                    func()
                 break  # Call each function associated with the model name
 
     def run(self):
 
-        if self.changes == False:
-            return 
-        for model in self.models:
-            self.insert_model(model, **self.changes)
+        changes, models = handle_config_changes()
+        for model in models:
+            self.insert_model(model, **changes)
+        print(f"{self.count = }")
         con.commit()
         self.cursor_obj.close()
         con.close()
-        

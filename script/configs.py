@@ -1,16 +1,17 @@
-max_field_count: 30
-min_field_count: 15
-max_field_size: 150
-min_field_size: 30
-duration: 5
-min_users_per_community: 15
-max_users_per_community: 20
-devices_weights: {
+
+max_field_count = 30
+min_field_count = 15
+max_field_size = 150
+min_field_size = 30
+duration = 5
+min_users_per_community = 15
+max_users_per_community = 20
+devices_weights = {
     "hand tool": (-10, 200),
     "Tractor or Combine": (-5, 20),
     "Truck": (-2, 9),
 }
-field_owner_weights: {
+field_owner_weights = {
     "Vanadzor": 0.9,    
     "Alaverdi": 0.8,    
     "Spitak": 0.6,      
@@ -22,7 +23,7 @@ field_owner_weights: {
     "Pambak": 0.8,      
     "Odzun": 0.6,
 }
-community_weights: {
+community_weights = {
     "Vanadzor": 0.9,
     "Alaverdi": 0.8,
     "Spitak": 0.7,
@@ -34,7 +35,7 @@ community_weights: {
     "Pambak": 0.6,
     "Odzun": 0.7,
 }
-product_weights: {
+product_weights = {
     "Russet Potato": 0.2,
     "Russet Potato": 0.5,
     "Sweet Potato": 0.8,
