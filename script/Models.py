@@ -26,7 +26,7 @@ class Models:
             print(f"\nReport \n inserted data count is:  {count}  \n It lasted: {times} \n")
 
     def model_product_types(self):
-        if self.data_mocking.get_table_data_lenght("product_types", limit=1) > 0:
+        if self.data_mocking.get_table_data_lenght("product_types", limit=3) > 2:
             print("Product types units table had been inserted before this run.")
         else:
             times, count = self.data_mocking.insert_product_types()

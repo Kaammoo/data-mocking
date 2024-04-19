@@ -565,15 +565,14 @@ class DataMocking:
             placeholders = ", ".join(["%s"] * (len(product_type_columns) - 1))
 
             product_type_data = [("vegetables",), ("cereal",)]
-            for product_type in product_type_data:
-                self.cursor_obj.execute(
-                    f"INSERT INTO product_types ({column_names}) VALUES ({placeholders})",
-                    product_type,
-                )
-                start_time = time.time()
-                end_time = time.time()  # End timing
-                elapsed_time = end_time - start_time
-                return elapsed_time, len(product_type_data)
+
+            self.cursor_obj.executemany(
+                f"INSERT INTO product_types ({column_names}) VALUES ({placeholders})",
+                product_type_data,
+            )
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            return elapsed_time, len(product_type_data)
 
     def insert_products(self):
         start_time = time.time()
@@ -1349,6 +1348,7 @@ class DataMocking:
         changes, models = handle_config_changes()
         for model in models:
             self.insert_model(model, **changes)
-
-        for model in models:
-            self.insert_model(model)
+        con.commit()
+        self.cursor_obj.close()
+        con.close()
+        
