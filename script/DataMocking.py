@@ -244,7 +244,7 @@ class DataMocking:
             )
             end_time = time.time()  # End timing
             elapsed_time = end_time - start_time
-            return elapsed_time, len(expense_date)
+            return elapsed_time, len(insert_data)
 
     def insert_portable_devices_communities(self, devices_weights=devices_weights):
         start_time = time.time()
@@ -347,7 +347,7 @@ class DataMocking:
             elapsed_time = end_time - start_time
             return elapsed_time, len(insertion_data)
 
-    def insert_harvests_devices(self):
+    def insert_harvest_devices(self):
         start_time = time.time()
         # Fetch column names and data types for the harvest_devices table from the schema
         harvest_devices_columns = self.schema.get("harvest_devices", {})
