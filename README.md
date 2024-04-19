@@ -29,7 +29,7 @@ git clone https://github.com/Kaammoo/data-mocking.git
 ```
 
 ```
-cd Breadcrumbsdata-mocking
+cd data-mocking
 git checkout Develop
 ```
 
