@@ -1,14 +1,14 @@
-from utilities import read_config, tables, read_file
+from utilities import read_config_yamle, tables, read_file
 
 
 def handle_config_changes(default_models=None):
     change = input("Do you need to change anything in configs? (y/yes or n/no): ")
-    conf = read_config("script/configs.py")
+    conf = read_config_yamle("script/configs.yml")
     if change.lower() in ["y", "yes"]:
 
         changes = {}
         models = [str(i) for i in range(1, 4)]
-        print(read_file("script/configs.py"))
+        print(read_file("script/configs.yml"))
 
         while True:
             print("These are your arguments:")
@@ -35,8 +35,10 @@ def handle_config_changes(default_models=None):
             models = input("Enter model numbers separated by space: ").split()
         else:
             print("Invalid input. Please enter y/yes or n/no.")
+            return False, False
     else:
-        return
+        print("Invalid input. Please enter y/yes or n/no.")
+        return False, False
     
     
     conf.update(changes)

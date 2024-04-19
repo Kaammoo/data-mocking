@@ -7,16 +7,17 @@ from consts import *
 import datetime
 import time 
 from utilities import *
-from config_handler import handle_config_changes
 from Models import Models
 
 
 class DataMocking:
-    def __init__(self):
+    def __init__(self, changes, models):
         self.cursor_obj = con.cursor()
         self.fake = Faker()
         self.schema = fetch_schema()
         self.models = Models(self)
+        self.changes = changes
+        self.models = models
 
         self.model_dependencies = {
             ("1", "plantings"): [
@@ -1345,9 +1346,10 @@ class DataMocking:
 
     def run(self):
 
-        changes, models = handle_config_changes()
-        for model in models:
-            self.insert_model(model, **changes)
+        if self.changes == False:
+            return 
+        for model in self.models:
+            self.insert_model(model, **self.changes)
         con.commit()
         self.cursor_obj.close()
         con.close()
