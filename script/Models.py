@@ -1,6 +1,3 @@
-from configs import *
-
-
 class Models:
     def __init__(self, data_mocking):
         self.data_mocking = data_mocking

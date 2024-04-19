@@ -1,9 +1,9 @@
-from utilities import read_config_yamle, tables, read_file
+from utilities import read_config_yaml, tables, read_file
 
 
 def handle_config_changes(default_models=None):
     change = input("Do you need to change anything in configs? (y/yes or n/no): ")
-    conf = read_config_yamle("script/configs.yml")
+    conf = read_config_yaml("script/configs.yml")
     if change.lower() in ["y", "yes"]:
 
         changes = {}

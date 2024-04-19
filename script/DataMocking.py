@@ -2,7 +2,6 @@ import random
 from faker import Faker
 from db import con
 from get_schema import fetch_schema
-from configs import *
 from consts import *
 import datetime
 import time 
@@ -247,7 +246,7 @@ class DataMocking:
             elapsed_time = end_time - start_time
             return elapsed_time, len(insert_data)
 
-    def insert_portable_devices_communities(self, devices_weights=devices_weights):
+    def insert_portable_devices_communities(self, devices_weights=None):
         start_time = time.time()
         # Fetch column names and data types for the portable_devices_communities table from the schema
         pdc_columns = self.schema.get("portable_devices_communities", {})
@@ -718,11 +717,11 @@ class DataMocking:
 
     def insert_fields(
         self,
-        min_field_count=min_field_count,
-        max_field_count=max_field_count,
-        min_field_size=min_field_size,
-        max_field_size=max_field_size,
-        field_owner_weights=field_owner_weights,
+        min_field_count=None,
+        max_field_count=None,
+        min_field_size=None,
+        max_field_size=None,
+        field_owner_weights=None,
     ):
         start_time = time.time()
         # Fetch column names and data types for the fields table from the schema
@@ -1340,8 +1339,8 @@ class DataMocking:
     def insert_model(self, model_name, **args):
         for key in self.model_dependencies:
             if model_name in key:
-                for func in self.model_dependencies[key]:
-                    func()
+                for function in self.model_dependencies[key]:
+                    function()
                 break  # Call each function associated with the model name
 
     def run(self):

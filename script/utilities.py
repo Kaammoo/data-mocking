@@ -172,9 +172,7 @@ def read_file(file_path):
         print(f"Error occurred: {str(e)}")
 
 
-def read_config_yamle(file_path):
-
-
+def read_config_yaml(file_path):
     with open(file_path, 'r') as file:
         prime_service = yaml.safe_load(file)
 
