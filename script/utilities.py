@@ -1,5 +1,6 @@
 import datetime
 import random
+import yaml
 
 
 def get_season(month):
@@ -172,10 +173,12 @@ def read_file(file_path):
         print(f"Error occurred: {str(e)}")
 
 
-def read_config(file_path):
-    config = {}
+def read_config_yaml(file_path):
+    with open(file_path, 'r') as file:
+        prime_service = yaml.safe_load(file)
 
-    with open(file_path, "r") as file:
-        exec(file.read(), config)
+    # Convert string representations of tuples to actual tuples
+    prime_service['devices_weights'] = {k: tuple(map(int, v.strip('()').split(','))) for k, v in prime_service['devices_weights'].items()}
 
-    return config
+    return prime_service
+

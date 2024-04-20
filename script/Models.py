@@ -1,9 +1,54 @@
-from configs import *
-
 
 class Models:
     def __init__(self, data_mocking):
         self.data_mocking = data_mocking
+        self.model_dependencies = {
+            ("1", "plantings"): [
+                self.model_users,
+                self.model_product_types,
+                self.model_products,
+                self.model_measurement_units,
+                self.model_fields,
+                self.model_records,
+                self.model_plantings,
+                self.model_portable_devices,
+                self.model_portable_devices_communities,
+                self.model_planting_devices,
+            ],
+            ("2", "harvests"): [
+                self.model_users,
+                self.model_product_types,
+                self.model_products,
+                self.model_measurement_units,
+                self.model_fields,
+                self.model_records,
+                self.model_plantings,
+                self.model_portable_devices,
+                self.model_portable_devices_communities,
+                self.model_harvests,
+                self.model_harvest_devices,
+            ],
+            ("3", "cultivations"): [
+                self.model_users,
+                self.model_product_types,
+                self.model_products,
+                self.model_measurement_units,
+                self.model_precipitation_types,
+                self.model_fields,
+                self.model_records,
+                self.model_plantings,
+                self.model_portable_devices,
+                self.model_portable_devices_communities,
+                self.model_planting_devices,
+                self.model_harvests,
+                self.model_harvest_devices,
+                self.model_weather_metrics,
+                self.model_cultivations,
+                self.model_expenses,
+                self.model_cultivation_devices,
+                self.model_devices_calendars,
+            ],
+        }
 
     def report(self, table_name, count, time):
         print(
@@ -22,16 +67,16 @@ class Models:
             print("Fields units table had been inserted before this run.")
         else:
             times, count = self.data_mocking.insert_fields(
-                args.get("min_field_count", min_field_count),
-                args.get("max_field_count", max_field_count),
-                args.get("min_field_size", min_field_size),
-                args.get("max_field_size", max_field_size),
-                args.get("field_owner_weights", field_owner_weights),
+                args['changes'].get("min_field_count"),
+                args['changes'].get("max_field_count"),
+                args['changes'].get("min_field_size"),
+                args['changes'].get("max_field_size"),
+                args['changes'].get("field_owner_weights"),
             )
             print("\nFields units table inserted successfully")
             self.report("fields", count, times)
 
-    def model_product_types(self):
+    def model_product_types(self, **args):
         if self.data_mocking.get_table_data_lenght("product_types", limit=3) > 2:
             print("Product types units table had been inserted before this run.")
         else:
@@ -39,7 +84,7 @@ class Models:
             print("\nProduct types units table inserted successfully")
             self.report("product_types", count, times)
 
-    def model_products(self):
+    def model_products(self, **args):
         if self.data_mocking.get_table_data_lenght("products", limit=1) > 0:
             print("Products table had been inserted before this run.")
         else:
@@ -51,11 +96,14 @@ class Models:
         if self.data_mocking.get_table_data_lenght("users", limit=6) > 5:
             print("Users had been inserted before this run.")
         else:
+            print(f"{args = }")
             times, count = self.data_mocking.insert_users(
-                args.get("min_users_per_community", min_users_per_community),
-                args.get("max_users_per_community", max_users_per_community),
-                args.get("community_weights", community_weights),
+                args['changes'].get("min_users_per_community"),
+                args['changes'].get("max_users_per_community"),
+                args['changes'].get("community_weights"),
             )
+            v= args['changes'].get("min_users_per_community")
+            print(f"{v = }")
             print("\n Users table inserted successfully \n")
             self.report("users", count, times)
 
@@ -64,12 +112,12 @@ class Models:
             print("Records table had been inserted before this run.")
         else:
             times, count = self.data_mocking.insert_records(
-                args.get("duration", duration)
+                args['changes'].get("duration")
             )
             print("\n Records table inserted successfully")
             self.report("records", count, times)
 
-    def model_portable_devices(self):
+    def model_portable_devices(self, **args):
         if self.data_mocking.get_table_data_lenght("portable_devices", limit=1) > 0:
             print("Portable devices table had been inserted before this run.")
         else:
@@ -89,7 +137,7 @@ class Models:
             )
         else:
             times, count = self.data_mocking.insert_portable_devices_communities(
-                args.get("devices_weights", devices_weights)
+                args['changes'].get("devices_weights")
             )
             print("\nPortable devices communities table inserted successfully")
             self.report("portable_devices_communities", count, times)
@@ -99,12 +147,12 @@ class Models:
             print("Plantings table had been inserted before this run.")
         else:
             times, count = self.data_mocking.insert_plantings(
-                args.get("duration", duration)
+                args['changes'].get("duration")
             )
             print("\nPlantings table inserted successfully")
             self.report("plantings", count, times)
 
-    def model_planting_devices(self):
+    def model_planting_devices(self, **args):
         if self.data_mocking.get_table_data_lenght("planting_devices", limit=1) > 0:
             print("Planting devices table had been inserted before this run.")
         else:
@@ -112,7 +160,7 @@ class Models:
             print("\nPlanting devices table inserted successfully")
             self.report("planting_devices", count, times)
 
-    def model_harvests(self):
+    def model_harvests(self, **args):
         if self.data_mocking.get_table_data_lenght("harvests", limit=1) > 0:
             print("Harvests table had been inserted before this run.")
         else:
@@ -120,7 +168,7 @@ class Models:
             print("Harvests table inserted successfully")
             self.report("harvests", count, times)
 
-    def model_measurement_units(self):
+    def model_measurement_units(self, **args):
         if self.data_mocking.get_table_data_lenght("measurement_units", limit=6) > 5:
             print("Measurement units table had been inserted before this run.")
         else:
@@ -128,7 +176,7 @@ class Models:
             print("\nMeasurement units table inserted successfully")
             self.report("measurement_units", count, times)
 
-    def model_harvest_devices(self):
+    def model_harvest_devices(self, **args):
         if self.data_mocking.get_table_data_lenght("harvest_devices", limit=1) > 0:
             print("Harvest devices table had been inserted before this run.")
         else:
@@ -136,7 +184,7 @@ class Models:
             print("\nHarvest devices table inserted successfully")
             self.report("harvest_devices", count, times)
 
-    def model_precipitation_types(self):
+    def model_precipitation_types(self, **args):
         if self.data_mocking.get_table_data_lenght("prec_types", limit=2) > 1:
             print("Precipitation types table had been inserted before this run.")
         else:
@@ -144,7 +192,7 @@ class Models:
             print("\nPrecipitation types table inserted successfully")
             self.report("prec_types", count, times)
 
-    def model_weather_metrics(self):
+    def model_weather_metrics(self, **args):
         if self.data_mocking.get_table_data_lenght("weather_metrics", limit=1) > 0:
             print("Weather metrics table had been inserted before this run.")
         else:
@@ -152,7 +200,7 @@ class Models:
             print("Weather metrics table inserted successfully")
             self.report("weather_metrics", count, times)
 
-    def model_cultivations(self):
+    def model_cultivations(self, **args):
         if self.data_mocking.get_table_data_lenght("cultivations", limit=1) > 0:
             print("Cultivation table had been inserted before this run.")
         else:
@@ -160,7 +208,7 @@ class Models:
             print("\nCultivation table inserted successfully")
             self.report("cultivations", count, times)
 
-    def model_cultivation_devices(self):
+    def model_cultivation_devices(self, **args):
         if self.data_mocking.get_table_data_lenght("cultivation_devices", limit=1) > 0:
             print("Cultivation devices table had been inserted before this run.")
         else:
@@ -168,7 +216,7 @@ class Models:
             print("\nCultivation devices table inserted successfully")
             self.report("cultivation_devices", count, times)
 
-    def model_devices_calendars(self):
+    def model_devices_calendars(self, **args):
         if self.data_mocking.get_table_data_lenght("devices_calendars", limit=1) > 0:
             print("Devices calendars table had been inserted before this run.")
         else:
@@ -181,7 +229,18 @@ class Models:
             print("Expenses table had been inserted before this run.")
         else:
             times, count = self.data_mocking.insert_expenses(
-                args.get("duration", duration)
+                args['changes'].get("duration")
             )
             print("\nExpenses table inserted successfully")
             self.report("expenses", count, times)
+            
+    def insert_model(self, model_name, **args):
+        
+        for key in self.model_dependencies:
+            if model_name in key:
+                for function in self.model_dependencies[key]:
+                    if function is not None:
+                        function(**args)
+                else:
+                    print("Function is None")
+                break  # Call each function associated with the model name
