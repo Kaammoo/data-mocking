@@ -61,6 +61,31 @@ Follow these steps to set up your PostgreSQL database for the Smart Farm project
     \c smart_farm
     ```
 
+### Server installation
+
+To install and run the server in development mode:
+
+```bash
+cd server/
+npm install
+```
+
+To run the server in production mode:
+
+```bash
+cd server/
+npm install
+```
+Execute the following command to run the migrations
+```bash
+npx sequelize db:migrate
+```
+Use the following command to execute all the available seeders:
+```bash
+npx sequelize db:seed:all
+```
+
+
 ## Usage
 
 After setting up the project and running the main script, the database will be populated with simulated data. You can then use this data to test your smart farm application.
