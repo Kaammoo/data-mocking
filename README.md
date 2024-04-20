@@ -69,13 +69,6 @@ To install and run the server in development mode:
 cd server/
 npm install
 ```
-
-To run the server in production mode:
-
-```bash
-cd server/
-npm install
-```
 Execute the following command to run the migrations
 ```bash
 npx sequelize db:migrate
