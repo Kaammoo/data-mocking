@@ -2,7 +2,9 @@
 import random
 import datetime
 from DataMocking import cursor_obj
+from faker import Faker
 
+fake = Faker()
 
 def calculate_insert_quantity(quantity):
     if quantity > 24:
