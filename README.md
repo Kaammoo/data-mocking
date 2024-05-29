@@ -1,10 +1,13 @@
 # Smart Farm Data Mocking Project
 
-This project is designed to mock data for a smart farm application, populating the database with simulated data for various entities such as users, communities, plantings, harvests, cultivation devices, and more.
+This project is designed to mock data for a smart farm application, populating the database with simulated data for various entities such as users, communities, plantings, harvests, cultivation devices, and more. **This project dipend on Smart Farm project**
+
 
 ## Getting Started
 
 To get started with this project, follow these instructions:
+**First you have to installated Smart Farm**
+
 
 ### Prerequisites
 
